@@ -1,0 +1,34 @@
+{
+    "name": "brunocfalcao/eduka-payments",
+    "description": "Eduka LMS payments gateway",
+    "keywords": ["Eduka", "Tutorials", "Laravel"],
+    "homepage": "https://github.com/brunocfalcao/eduka-payments",
+    "license": "MIT",
+    "authors": [{
+        "name": "Bruno Falcao",
+        "email": "bruno.c.falcao@brunofalcao.me",
+        "homepage": "https://www.brunocfalcao.com",
+        "role": "Developer"
+    }],
+    "require": {
+        "php": "^7.4|^8.0",
+        "illuminate/support": "^7.14|^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Eduka\\Payments\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Eduka\\Payments\\EdukaPaymentsServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
