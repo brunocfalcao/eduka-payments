@@ -12,7 +12,7 @@ class Checkout
 
         switch ($args[1]) {
             case 'price':
-                return Payment::tag($tag)->get('price');
+                var_dump(Payment::data());
                 break;
 
             case 'currency':
