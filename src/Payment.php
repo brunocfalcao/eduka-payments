@@ -3,6 +3,7 @@
 namespace Eduka\Payments;
 
 use Eduka\Cube\Models\Country;
+use Eduka\Payments\Concerns\RelatesWithProducts;
 use Illuminate\Support\Facades\Request;
 use ProtoneMedia\LaravelPaddle\Paddle;
 
@@ -16,8 +17,9 @@ class Payment
 
 class PaymentService
 {
+    use RelatesWithProducts;
+
     private $uuid;
-    private $canonical = 'default'; //Default product canonical
     private $data;
 
     public function __construct()
@@ -37,7 +39,7 @@ class PaymentService
      *
      * @return void
      */
-    public function tag(string $canonical = 'default')
+    public function canonical(string $canonical = 'default')
     {
         $this->canonical = $canonical;
 
@@ -74,10 +76,10 @@ class PaymentService
         // .env true? Then override session.
         if (env('REFRESH_PAYMENT_SESSION') == true) {
             $refresh = true;
-        };
+        }
 
         // Product canonical not using session mode? Then override session.
-        if (!$this->product()->using_session) {
+        if (! $this->product()->using_session) {
             $refresh = true;
         }
 
@@ -87,7 +89,7 @@ class PaymentService
         // Obtain the current product uuid to check the session key.
         $this->uuid = $this->product()->uuid;
 
-        if (!session()->has("eduka-payments:product:" . $this->uuid)) {
+        if (! session()->has('eduka-payments:payment:'.$this->uuid)) {
             $refresh = true;
         }
 
@@ -99,27 +101,19 @@ class PaymentService
             $this->compute();
             $this->store();
             $this->data->used_session = false;
-        } else {
-            $this->data = session("eduka-payments:product:" . $this->uuid);
-            $this->data->used_session = true;
-        }
-    }
 
-    /**
-     * Returns the current contextualized product given the canonical.
-     *
-     * @return Product
-     */
-    protected function product()
-    {
-        return course()->products()
-                       ->firstWhere('canonical', $this->canonical);
+            return;
+        }
+
+        $this->data = session('eduka-payments:payment:'.$this->uuid);
+        $this->data->used_session = true;
     }
 
     protected function store()
     {
         $uuid = $this->uuid;
-        session(["eduka-payments:product:$uuid" => $this->data]);
+        session(["eduka-payments:payment:$uuid" => $this->data]);
+
         return $this;
     }
 
@@ -145,7 +139,13 @@ class PaymentService
         //Update checkout data.
         $data->checkout = new \StdClass();
         $data->checkout->price = $data->paddle->price;
+        $data->checkout->currency = $data->paddle->currency_symbol;
 
+        // Remove any other product except the first key.
+        $this->data->paddle->product = $this->data->products[0];
+        unset($this->data->products);
+
+        // Re-apply data into the object $data attribute.
         $this->data = $data;
     }
 
@@ -201,11 +201,18 @@ class PaymentService
          */
         if ($this->product()->discount_percentage != 0) {
             $this->data->discount = new \StdClass();
-            $this->data->discount->percentage = $this->product()->discount_percentage;
-            $this->data->discount->amount = $this->data->paddle->price * $this->data->discount->percentage / 100;
+
+            $this->data->discount->percentage =
+                $this->product()->discount_percentage;
+
+            $this->data->discount->amount =
+                $this->data->paddle->price *
+                $this->data->discount->percentage / 100;
 
             //Update checkout data.
-            $this->data->checkout->price = $this->data->paddle->price - $this->data->discount->amount;
+            $this->data->checkout->price =
+                $this->data->paddle->price -
+                $this->data->discount->amount;
         }
 
         /**
@@ -224,8 +231,11 @@ class PaymentService
             $this->data->ppp = new \StdClass();
             $this->data->ppp->country_iso = $country->code;
             $this->data->ppp->country_name = $country->name;
-            $this->data->ppp->discount_percentage = 100 - $country->ppp_index * 100;
-            $this->data->ppp->discount_amount = $this->data->checkout->price * (1 - $country->ppp_index);
+            $this->data->ppp->discount_percentage =
+                100 - $country->ppp_index * 100;
+
+            $this->data->ppp->discount_amount =
+                $this->data->checkout->price * (1 - $country->ppp_index);
 
             /**
              * We will now update the checkout price, will be the final price.

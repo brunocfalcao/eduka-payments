@@ -6,17 +6,8 @@ use Eduka\Payments\Payment;
 
 class Checkout
 {
-    public function __invoke(array $args)
+    public function __invoke(string|bool $path)
     {
-        $tag = $args[0];
-
-        switch ($args[1]) {
-            case 'price':
-                var_dump(Payment::data());
-                break;
-
-            case 'currency':
-                break;
-        }
+        return data_get(stdclass_to_array(Payment::data()), $path);
     }
 }

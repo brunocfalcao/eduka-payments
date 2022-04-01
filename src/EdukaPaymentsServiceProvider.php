@@ -3,6 +3,7 @@
 namespace Eduka\Payments;
 
 use Eduka\Payments\Directives\Checkout;
+use Eduka\Payments\Directives\Paylink;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use ImLiam\BladeHelper\Facades\BladeHelper;
@@ -24,10 +25,30 @@ final class EdukaPaymentsServiceProvider extends ServiceProvider
 
     protected function loadDirectives()
     {
+        /**
+         * The @checkout directive works by passing 2 possible values:.
+         *
+         * @checkout(true);
+         * @checkout('paddle.price') as example. It's an array conversion from
+         * the Payment::$data StdClass. Please check the Payment->compute()
+         * method to see what possible data structure values can be fetched.
+         */
         BladeHelper::directive(
             'checkout',
-            function (...$args) {
-                return (new Checkout())($args);
+            function (string|bool $path) {
+                return (new Checkout())($path);
+            }
+        );
+
+        BladeHelper::directive(
+            'paylink',
+            function (string|bool $path, string $canonical, array $payload = [], array $passthrough = []) {
+                return (new Paylink())(
+                    $path,
+                    $canonical,
+                    $payload,
+                    $passthrough
+                );
             }
         );
     }
