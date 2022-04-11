@@ -3,8 +3,7 @@
 namespace Eduka\Payments;
 
 use Eduka\Analytics\Services\Affiliate;
-use Eduka\Payments\Concerns\RelatesWithProducts;
-use Eduka\Payments\Payment;
+use Eduka\Payments\Concerns\InteractsWithProducts;
 use ProtoneMedia\LaravelPaddle\Paddle;
 
 class Paylink
@@ -17,7 +16,7 @@ class Paylink
 
 class PaylinkService
 {
-    use RelatesWithProducts;
+    use InteractsWithProducts;
 
     private $uuid;
     private $affiliates = [];
@@ -151,14 +150,18 @@ class PaylinkService
         $affiliates = [];
 
         /**
-         * Check if we have a temporary affiliate. If so, the commission
-         * percentage is absolute. Meaning there is no adjustments in case
-         * it still exists fixed affiliates.
+         * Check if we have a temporary affiliate (a referrer). If so,
+         * the commission percentage is absolute. Meaning there is
+         * no adjustments in case it still exists fixed affiliates.
          */
+        $referrer = Affiliate::fromReferrer();
 
-        dd(Affiliate::canonical($this->canonical)->asReferrer());
+        /**
+         * Get possible fixed affiliates.
+         */
+        $fixedAffiliates = Affiliate::fixed();
 
-        $referrer = Affiliate::canonical($this->canonical)->referrer();
+        dd($fixedAffiliates);
 
         // Get current price for the current canonical.
         $this->getCheckoutPrice();
@@ -171,12 +174,14 @@ class PaylinkService
             $amount = round($this->price * $referrer->commission_percentage / 100, 2);
 
             // Add initial data to the affiliates array. Lot to come yet ...
-            $affiliates[] = ['vendor_id' => $referrer->paddle_vendor_id,
-                             'affiliate_id' => $referrer->id,
-                             'type' => 'not-fixed',
-                             'amount' => $amount,
-                             'percentage' => $referrer->commission_percentage,
-                             'price_percentage' => $referrer->commission_percentage];
+            $affiliates[] = [
+                'vendor_id' => $referrer->paddle_vendor_id,
+                'affiliate_id' => $referrer->id,
+                'type' => 'not-fixed',
+                'amount' => $amount,
+                'percentage' => $referrer->commission_percentage,
+                'price_percentage' => $referrer->commission_percentage
+            ];
 
             /**
              * If there are fixed affiliates for this product id, then they can
@@ -203,9 +208,7 @@ class PaylinkService
          * the 30 USD, the 35 USD and the 23.10 USD from the 100 USD (total
          * price). In this case, the paddle vendor affiliate percentages
          * will be NF1:0.3, NF2:0.35, NF3: 0.23.
-         *
          */
-
         $affiliates = Affiliate::canonical($this->canonical)
                                ->affiliates();
 
@@ -246,7 +249,7 @@ class PaylinkService
 
         $returnUrl = config('eduka-nereus.paddle.return_url');
 
-        $this->payLink = Paddle::product()
+        $this->payLink = Paddle::$this->product()
                                ->generatePayLink()
                                ->productId($this->product()->paddle_product_id)
                                ->returnUrl($returnUrl)
@@ -263,7 +266,7 @@ class PaylinkService
         }
 
         /*
-        $this->payLink = Paddle::product()
+        $this->payLink = Paddle::$this->product()
              ->generatePayLink()
              ->productId(env('PADDLE_PRODUCT_ID'))
              ->returnUrl(url('paddle/thanks'))

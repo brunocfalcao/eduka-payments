@@ -3,7 +3,7 @@
 namespace Eduka\Payments;
 
 use Eduka\Cube\Models\Country;
-use Eduka\Payments\Concerns\RelatesWithProducts;
+use Eduka\Payments\Concerns\InteractsWithProducts;
 use Illuminate\Support\Facades\Request;
 use ProtoneMedia\LaravelPaddle\Paddle;
 
@@ -17,7 +17,7 @@ class Payment
 
 class PaymentService
 {
-    use RelatesWithProducts;
+    use InteractsWithProducts;
 
     private $uuid;
     private $data;
@@ -30,20 +30,6 @@ class PaymentService
     public static function new(...$args)
     {
         return new self(...$args);
-    }
-
-    /**
-     * Set the product canonical for the course session.
-     *
-     * @param  string $canonical
-     *
-     * @return void
-     */
-    public function canonical(string $canonical = 'default')
-    {
-        $this->canonical = $canonical;
-
-        return $this;
     }
 
     /**
