@@ -19,10 +19,10 @@ class PaylinkService
     use InteractsWithProducts;
 
     private $uuid;
-    private $affiliates = [];
     private $payload = [];
     private $passthrough = [];
     private $data;
+    private $price;
 
     public function __construct()
     {
@@ -38,12 +38,11 @@ class PaylinkService
     {
         // Default instanciation.
         $this->data = new \StdClass();
-        $this->data->used_session = true;
 
         // By default, the data refresh is not needed.
         $refresh = false;
 
-        // .env true? Then override session.
+        // .env value true? Then override session.
         if (env('REFRESH_PAYLINK_SESSION') == true) {
             $refresh = true;
         }
@@ -67,12 +66,10 @@ class PaylinkService
         if ($refresh) {
             $this->compute();
             $this->store();
-            $this->data->used_session = false;
-
-            return;
         }
 
-        $this->data = session('eduka-payments:paylink:'.$this->uuid);
+        // No matter what refresh/non-refresh scenario, we will have a session.
+        $this->data = session('eduka-payments:paylink:' . $this->uuid);
     }
 
     protected function compute()
@@ -156,12 +153,8 @@ class PaylinkService
          */
         $referrer = Affiliate::fromReferrer();
 
-        /**
-         * Get possible fixed affiliates.
-         */
+         // Get possible fixed affiliates.
         $fixedAffiliates = Affiliate::fixed();
-
-        dd($fixedAffiliates);
 
         // Get current price for the current canonical.
         $this->getCheckoutPrice();
@@ -173,14 +166,24 @@ class PaylinkService
             // Obtain the absolute commission amount.
             $amount = round($this->price * $referrer->commission_percentage / 100, 2);
 
-            // Add initial data to the affiliates array. Lot to come yet ...
+            /**
+             * Add the first affiliate to the affiliates temporary structure.
+             * This one is referrer, and not fixed.
+             */
             $affiliates[] = [
                 'vendor_id' => $referrer->paddle_vendor_id,
                 'affiliate_id' => $referrer->id,
-                'type' => 'not-fixed',
+                'type' => $referrer->type,
                 'amount' => $amount,
-                'percentage' => $referrer->commission_percentage,
-                'price_percentage' => $referrer->commission_percentage
+                'commission_percentage' => round($referrer->commission_percentage / 100, 2),
+
+                /**
+                 * These are computed variables. For the referrer (not a fixed
+                 * affiliate) paddle percentage are the same because the
+                 * referrer commission is absolute. The fixed affiliates
+                 * might differ in case there is a referrer like now.
+                 */
+                'paddle_percentage' => round($referrer->commission_percentage / 100, 2)
             ];
 
             /**
@@ -209,10 +212,51 @@ class PaylinkService
          * price). In this case, the paddle vendor affiliate percentages
          * will be NF1:0.3, NF2:0.35, NF3: 0.23.
          */
-        $affiliates = Affiliate::canonical($this->canonical)
-                               ->affiliates();
+        foreach ($fixedAffiliates as $affiliate) {
+            /**
+             * Lets add each fixed affiliate and compute a first slice
+             * percentage. Then we need to re-run the fixed affiliates
+             * to compute the final percentage based on the initial
+             * slice percentages.
+             *
+             * Calculate the right commission percentage. Get the amount
+             * from the affiliates.commission_percentage, and then compute
+             * the real paddle commission percentage from that amount.
+             */
 
-        dd($this->price, $remainingPrice, $affiliates);
+            // 1. Calculate the amount on the current available cake.
+            $amount = $this->getAmountFromPercentage(
+                $remainingPrice,
+                $affiliate->commission_percentage
+            );
+
+            // 2. With the amount, calculate the percentake of the total cake.
+            $percentage = $this->getPercentageFromAmount(
+                $this->price, // Full product price.
+                $amount
+            );
+
+            $affiliates[] = [
+                'vendor_id' => $affiliate->paddle_vendor_id,
+                'affiliate_id' => $affiliate->id,
+                'type' => $affiliate->type,
+                'amount' => $amount,
+                'commission_percentage' => round($affiliate->commission_percentage / 100, 2),
+                'paddle_percentage' => $percentage / 100
+            ];
+        }
+
+        return $affiliates;
+    }
+
+    protected function getAmountFromPercentage($cake, $percentage)
+    {
+        return round($cake * $percentage / 100, 2);
+    }
+
+    protected function getPercentageFromAmount($cake, $amount)
+    {
+        return round($amount / $cake * 100, 2);
     }
 
     protected function getCheckoutPrice()
@@ -245,45 +289,41 @@ class PaylinkService
          */
         $affiliates = $this->computeAffiliatesCommissions();
 
-        //dd($this->passthrough, $this->payload, $this->affiliates);
+        /**
+         * The return url is the url suffix that is redirected after
+         * the visitor buys the course at the end of the checkout
+         * process.
+         */
+        $returnUrl = url(config('eduka-nereus.paddle.return_url'));
 
-        $returnUrl = config('eduka-nereus.paddle.return_url');
-
-        $this->payLink = Paddle::$this->product()
+        $paylink = Paddle::product()
                                ->generatePayLink()
                                ->productId($this->product()->paddle_product_id)
                                ->returnUrl($returnUrl)
                                ->quantityVariable(0)
                                ->quantity(1)
-                               ->prices(["USD:{$price}"]);
+                               ->prices(["USD:" . $this->price]);
 
         if ($passthrough) {
-            $this->payLink->passthrough(json_encode($passthrough));
+            $paylink->passthrough(json_encode($passthrough));
         }
 
         if ($affiliates) {
-            $this->payLink->affiliates();
+            $result = [];
+            // Parse the affiliates values and commissions into an array.
+            foreach ($affiliates as $affiliate) {
+                $result[] = $affiliate['vendor_id'] . ':' . $affiliate['paddle_percentage'];
+            }
+            $paylink->affiliates($result);
         }
 
-        /*
-        $this->payLink = Paddle::$this->product()
-             ->generatePayLink()
-             ->productId(env('PADDLE_PRODUCT_ID'))
-             ->returnUrl(url('paddle/thanks'))
-             ->quantityVariable(0)
-             ->quantity(1)
-             ->prices(["USD:{$price}"]);
-
-        $this->payLink->affiliates([$vendor_id:0.50]]);
-        $this->payLink->passthrough(json_encode($passthrough));
-        $this->payLink = $this->payLink->send();
-        */
+        $this->data->url = $paylink->send()['url'];
+        $this->data->success = true;
     }
 
-    public function data()
+    public function data(string $property)
     {
         $this->refresh();
-
-        return $this->data;
+        return $this->data->$property;
     }
 }

@@ -13,10 +13,12 @@ trait InteractsWithProducts
         return $this;
     }
 
-    protected function product(string $canonical = 'default')
+    protected function product()
     {
-        $this->canonical($canonical);
-
-        return course()->products()->firstWhere('canonical', $this->canonical);
+        return course()->products()
+                       ->where('canonical', $this->canonical)
+                       ->firstOr(function () {
+                        throw new \Exception('No product found for the passed canonical');
+                       });
     }
 }
