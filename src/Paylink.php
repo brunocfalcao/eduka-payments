@@ -69,7 +69,7 @@ class PaylinkService
         }
 
         // No matter what refresh/non-refresh scenario, we will have a session.
-        $this->data = session('eduka-payments:paylink:' . $this->uuid);
+        $this->data = session('eduka-payments:paylink:'.$this->uuid);
     }
 
     protected function compute()
@@ -183,7 +183,7 @@ class PaylinkService
                  * referrer commission is absolute. The fixed affiliates
                  * might differ in case there is a referrer like now.
                  */
-                'paddle_percentage' => round($referrer->commission_percentage / 100, 2)
+                'paddle_percentage' => round($referrer->commission_percentage / 100, 2),
             ];
 
             /**
@@ -242,7 +242,7 @@ class PaylinkService
                 'type' => $affiliate->type,
                 'amount' => $amount,
                 'commission_percentage' => round($affiliate->commission_percentage / 100, 2),
-                'paddle_percentage' => $percentage / 100
+                'paddle_percentage' => $percentage / 100,
             ];
         }
 
@@ -302,7 +302,7 @@ class PaylinkService
                                ->returnUrl($returnUrl)
                                ->quantityVariable(0)
                                ->quantity(1)
-                               ->prices(["USD:" . $this->price]);
+                               ->prices(['USD:'.$this->price]);
 
         if ($passthrough) {
             $paylink->passthrough(json_encode($passthrough));
@@ -312,7 +312,7 @@ class PaylinkService
             $result = [];
             // Parse the affiliates values and commissions into an array.
             foreach ($affiliates as $affiliate) {
-                $result[] = $affiliate['vendor_id'] . ':' . $affiliate['paddle_percentage'];
+                $result[] = $affiliate['vendor_id'].':'.$affiliate['paddle_percentage'];
             }
             $paylink->affiliates($result);
         }
@@ -324,6 +324,7 @@ class PaylinkService
     public function data(string $property)
     {
         $this->refresh();
+
         return $this->data->$property;
     }
 }
