@@ -3,7 +3,9 @@
 namespace Eduka\Payments;
 
 use Eduka\Analytics\Services\Affiliate;
+use Eduka\Analytics\Services\Visitor;
 use Eduka\Payments\Concerns\InteractsWithProducts;
+use Illuminate\Support\Facades\Auth;
 use ProtoneMedia\LaravelPaddle\Paddle;
 
 class Paylink
@@ -244,6 +246,13 @@ class PaylinkService
                 'commission_percentage' => round($affiliate->commission_percentage / 100, 2),
                 'paddle_percentage' => $percentage / 100,
             ];
+        }
+
+        if (count($affiliates) > 0) {
+            activity()
+                ->causedBy(Auth::id() ?? Visitor::get())
+                ->withProperties($affiliates)
+                ->log('Paylink captured with affiliates');
         }
 
         return $affiliates;
