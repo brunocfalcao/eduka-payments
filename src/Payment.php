@@ -2,8 +2,10 @@
 
 namespace Eduka\Payments;
 
+use Eduka\Analytics\Services\Visitor;
 use Eduka\Cube\Models\Country;
 use Eduka\Payments\Concerns\InteractsWithProducts;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 use ProtoneMedia\LaravelPaddle\Paddle;
 
@@ -64,7 +66,7 @@ class PaymentService
             $refresh = true;
         }
 
-        // Product canonical not using session mode? Then override session.
+        // Product type not using session mode? Then override session.
         if (! $this->product()->using_session) {
             $refresh = true;
         }
@@ -86,13 +88,20 @@ class PaymentService
         if ($refresh) {
             $this->compute();
             $this->store();
-            $this->data->used_session = false;
+
+            activity()
+                ->causedBy(Auth::id() ?? Visitor::get())
+                ->withProperties([
+                    'price' => $this->data->checkout->price,
+                    'discount' => $this->data->discount->percentage . '%',
+                    'country' => $this->data->customer_country
+            ])
+                ->log('Product "' . $this->product()->type . '" for course "' . course()->name . '" was refreshed');
 
             return;
         }
 
         $this->data = session('eduka-payments:payment:'.$this->uuid);
-        $this->data->used_session = true;
     }
 
     protected function store()

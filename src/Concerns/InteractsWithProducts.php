@@ -4,11 +4,11 @@ namespace Eduka\Payments\Concerns;
 
 trait InteractsWithProducts
 {
-    protected $canonical;
+    protected $type;
 
-    public function canonical(string $canonical = 'default')
+    public function type(string $type = 'default')
     {
-        $this->canonical = $canonical;
+        $this->type = $type;
 
         return $this;
     }
@@ -16,9 +16,9 @@ trait InteractsWithProducts
     protected function product()
     {
         return course()->products()
-                       ->where('canonical', $this->canonical)
+                       ->where('type', $this->type)
                        ->firstOr(function () {
-                        throw new \Exception('No product found for the passed canonical');
+                        throw new \Exception('No product found for the passed type (' . $this->type . ')');
                        });
     }
 }

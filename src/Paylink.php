@@ -156,7 +156,7 @@ class PaylinkService
          // Get possible fixed affiliates.
         $fixedAffiliates = Affiliate::fixed();
 
-        // Get current price for the current canonical.
+        // Get current price for the current product type.
         $this->getCheckoutPrice();
 
         //Variable just to keep a remaining price after needed subtractions.
@@ -261,7 +261,8 @@ class PaylinkService
 
     protected function getCheckoutPrice()
     {
-        $this->price = Payment::canonical($this->canonical)
+        // Copy this product type to the new payment type instantiation.
+        $this->price = Payment::type($this->type)
                               ->data()
                               ->checkout
                               ->price;

@@ -42,12 +42,12 @@ final class EdukaPaymentsServiceProvider extends ServiceProvider
 
         BladeHelper::directive(
             'paylink',
-            function (string|bool $path, array $payload = [], array $passthrough = [], string $canonical = 'default') {
+            function (string|bool $path, array $payload = [], array $passthrough = [], string $type = 'default') {
                 return (new Paylink())(
                     $path,
                     $payload,
                     $passthrough,
-                    $canonical
+                    $type
                 );
             }
         );
