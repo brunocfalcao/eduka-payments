@@ -214,7 +214,8 @@ class PaymentService
          * Next step is to compute the purchase power parity.
          * First is to check if:
          * 1. The url is ?ppp=1 or
-         * 2. The products.using_ppp is true.
+         * 2. The products.using_ppp is true or
+         * 3. .env('EDUKA_AUTO_PPP') is 1.
          *
          * If so, the we compute the ppp discount via the countries.ppp_index
          * value. To consider that the ppp discount should be applied after
@@ -244,7 +245,9 @@ class PaymentService
 
     protected function usingPPP()
     {
-        return Request::input('ppp') || $this->product()->using_ppp;
+        return Request::input('ppp') ||
+               $this->product()->using_ppp ||
+               env('EDUKA_AUTO_PPP') == true;
     }
 
     protected function getPrices()
