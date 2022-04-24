@@ -20,7 +20,7 @@ class ProcessPayment
 
     public function handle(PaymentSucceeded $event)
     {
-        info('paddle webhook api called with ' . $event->all());
+        info('paddle webhook api called with ' . json_encode($event->all()));
     }
 }
 
