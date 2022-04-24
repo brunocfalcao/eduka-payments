@@ -2,6 +2,8 @@
 
 namespace Eduka\Payments\Listeners;
 
+use Illuminate\Http\Request;
+
 /**
  * Listener called via the Paddle API webhook.
  *
