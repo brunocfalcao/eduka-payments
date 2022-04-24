@@ -29,7 +29,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Eduka\\Nereus\\EdukaNereusServiceProvider"
+                "Eduka\\Payments\\EdukaPaymentsServiceProvider"
             ]
         }
     }

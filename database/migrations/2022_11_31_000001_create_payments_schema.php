@@ -2,7 +2,9 @@
 
 use Eduka\Cube\Models\Course;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * The migration filename date should be always after all the eduka migration
@@ -19,7 +21,6 @@ class CreatePaymentsSchema extends Migration
     public function up()
     {
         Schema::create('payments_webbook', function (Blueprint $table) {
-            dd('here');
             $table->id();
 
             /**
