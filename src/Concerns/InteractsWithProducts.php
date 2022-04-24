@@ -18,7 +18,7 @@ trait InteractsWithProducts
         return course()->products()
                        ->where('type', $this->type)
                        ->firstOr(function () {
-                        throw new \Exception('No product found for the passed type (' . $this->type . ')');
+                        throw new \Exception('No product found for the passed type ('.$this->type.')');
                        });
     }
 }

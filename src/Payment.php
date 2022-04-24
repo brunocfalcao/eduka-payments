@@ -6,7 +6,6 @@ use Eduka\Analytics\Services\Visitor;
 use Eduka\Cube\Models\Country;
 use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 use ProtoneMedia\LaravelPaddle\Paddle;
 
@@ -96,9 +95,9 @@ class PaymentService
         }
 
         ApplicationLog::properties([
-                'price' => $this->data->checkout->price,
-                'discount' => $this->data->discount->percentage . '%',
-                'country' => $this->data->customer_country
+            'price' => $this->data->checkout->price,
+            'discount' => $this->data->discount->percentage.'%',
+            'country' => $this->data->customer_country,
         ])
                       ->group('paylink')
                       ->model($this->product())
@@ -216,7 +215,7 @@ class PaymentService
          * First is to check if:
          * 1. The url is ?ppp=1 or
          * 2. The products.using_ppp is true or
-         * 3. .env('EDUKA_AUTO_PPP') is 1.
+         * 3. .env('EDUKA_FORCE_PPP') is 1.
          *
          * If so, the we compute the ppp discount via the countries.ppp_index
          * value. To consider that the ppp discount should be applied after
@@ -248,7 +247,7 @@ class PaymentService
     {
         return Request::input('ppp') ||
                $this->product()->using_ppp ||
-               env('EDUKA_AUTO_PPP') == true;
+               env('EDUKA_FORCE_PPP') == true;
     }
 
     protected function getPrices()

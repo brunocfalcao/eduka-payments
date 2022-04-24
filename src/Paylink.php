@@ -6,7 +6,6 @@ use Eduka\Analytics\Services\Affiliate;
 use Eduka\Analytics\Services\Visitor;
 use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
-use Illuminate\Support\Facades\Auth;
 use ProtoneMedia\LaravelPaddle\Paddle;
 
 class Paylink
@@ -254,7 +253,7 @@ class PaylinkService
             ApplicationLog::properties($affiliates)
                           ->group('affiliates')
                           ->model(Visitor::get())
-                          ->log("Affiliates captured");
+                          ->log('Affiliates captured');
         }
 
         return $affiliates;
