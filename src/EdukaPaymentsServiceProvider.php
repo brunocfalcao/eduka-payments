@@ -20,7 +20,13 @@ final class EdukaPaymentsServiceProvider extends ServiceProvider
         $this->loadRoutes();
         $this->overridePaymentConfiguration();
         $this->loadDirectives();
+        $this->importMigrations();
         //Payment::dumpPaymentData();
+    }
+
+    protected function importMigrations(): void
+    {
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
 
     protected function loadDirectives()
