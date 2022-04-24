@@ -3,6 +3,7 @@
 namespace Eduka\Payments\Listeners;
 
 use Illuminate\Http\Request;
+use ProtoneMedia\LaravelPaddle\Events\PaymentSucceeded;
 
 /**
  * Listener called via the Paddle API webhook.
