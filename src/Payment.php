@@ -4,6 +4,7 @@ namespace Eduka\Payments;
 
 use Eduka\Analytics\Services\Visitor;
 use Eduka\Cube\Models\Country;
+use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
@@ -62,7 +63,7 @@ class PaymentService
         $refresh = false;
 
         // .env true? Then override session.
-        if (env('REFRESH_PAYMENT_SESSION') == true) {
+        if (env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true) {
             $refresh = true;
         }
 
@@ -88,20 +89,20 @@ class PaymentService
         if ($refresh) {
             $this->compute();
             $this->store();
-
-            activity()
-                ->causedBy(Auth::id() ?? Visitor::get())
-                ->withProperties([
-                    'price' => $this->data->checkout->price,
-                    'discount' => $this->data->discount->percentage . '%',
-                    'country' => $this->data->customer_country
-            ])
-                ->log('Product "' . $this->product()->type . '" for course "' . course()->name . '" was refreshed');
-
-            return;
+            $msg = 'Paylink generated';
+        } else {
+            $this->data = session('eduka-payments:payment:'.$this->uuid);
+            $msg = 'Paylink retrieved session';
         }
 
-        $this->data = session('eduka-payments:payment:'.$this->uuid);
+        ApplicationLog::properties([
+                'price' => $this->data->checkout->price,
+                'discount' => $this->data->discount->percentage . '%',
+                'country' => $this->data->customer_country
+        ])
+                      ->group('paylink')
+                      ->model($this->product())
+                      ->log($msg);
     }
 
     protected function store()
