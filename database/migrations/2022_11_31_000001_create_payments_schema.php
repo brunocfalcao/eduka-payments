@@ -60,8 +60,14 @@ class CreatePaymentsSchema extends Migration
 
             foreach ($fields as $field) {
                 $table->text($field)
-                  ->nullable();
+                      ->nullable();
             }
+
+            $table->foreignId('visitor_id')
+                  ->nullable();
+
+            $table->foreignId('user_id')
+                  ->nullable();
 
             $table->timestamps();
 

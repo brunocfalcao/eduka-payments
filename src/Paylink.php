@@ -6,6 +6,7 @@ use Eduka\Analytics\Services\Affiliate;
 use Eduka\Analytics\Services\Visitor;
 use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
+use Illuminate\Support\Str;
 use ProtoneMedia\LaravelPaddle\Paddle;
 
 class Paylink
@@ -291,8 +292,16 @@ class PaylinkService
          * Application of override/default values on the passthrough.
          * What's passed on the ->get() method will always
          * have priority over the default values from this class.
+         *
+         * There are MANDATORY keys needs always need to be present:
+         * visitor_id : The visitor id that started the checkout.
+         * auth_hashcode : A randomized code, so we don't have DDOS attacks.
+         *
          */
-        $passthrough = array_merge(['ip' => public_ip()], $this->passthrough);
+        $passthrough = array_merge([
+            'visitor_id' => Visitor::get()->id,
+            'auth_hashcode' => (string) Str::random(20)
+        ], $this->passthrough);
 
         /**
          * The affiliates computation uses the referrer that can be in session.
