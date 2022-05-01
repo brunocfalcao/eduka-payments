@@ -2,9 +2,7 @@
 
 namespace Eduka\Payments\Listeners;
 
-use App\Models\PaddleLog;
 use App\Models\User;
-use Eduka\Cube\Services\ApplicationLog;
 use Illuminate\Http\Request;
 use ProtoneMedia\LaravelPaddle\Events\PaymentSucceeded as EventPaymentSucceeded;
 
@@ -16,6 +14,7 @@ class PaymentSucceeded
     {
         $this->request = $request;
     }
+
     public function handle(EventPaymentSucceeded $event)
     {
         /**

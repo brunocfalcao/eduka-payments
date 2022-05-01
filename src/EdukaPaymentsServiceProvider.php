@@ -18,10 +18,13 @@ final class EdukaPaymentsServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->loadRoutes();
-        $this->overridePaymentConfiguration();
-        $this->loadDirectives();
+
+        if (! $this->app->runningInConsole()) {
+            $this->overridePaymentConfiguration();
+            $this->loadDirectives();
+        }
+
         $this->importMigrations();
-        //Payment::dumpPaymentData();
     }
 
     protected function importMigrations(): void

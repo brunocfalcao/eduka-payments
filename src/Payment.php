@@ -2,7 +2,6 @@
 
 namespace Eduka\Payments;
 
-use Eduka\Analytics\Services\Visitor;
 use Eduka\Cube\Models\Country;
 use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
@@ -235,7 +234,7 @@ class PaymentService
 
             /**
              * We will now update the checkout price, will be the final price.
-             * After this, the visitor can still apply a coupon, for an
+             * After this, the visit source can still apply a coupon, for an
              * extremely cheap price! Logically the best is not to use PPP
              * urls logic but actually to use a coupon logic (TBC) !
              */

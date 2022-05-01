@@ -3,7 +3,6 @@
 namespace Eduka\Payments;
 
 use Eduka\Analytics\Services\Affiliate;
-use Eduka\Analytics\Services\Visitor;
 use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
 use Illuminate\Support\Str;
@@ -114,7 +113,7 @@ class PaylinkService
     {
         /**
          * Affiliates are entities that will receive a commission based on
-         * the price that the visitor bought the course.
+         * the price that the visit source bought the course.
          *
          * An affiliate will always be of 2 types:
          * temporary - Will receive a commission, based on a start and end date.
@@ -253,7 +252,7 @@ class PaylinkService
         if (count($affiliates) > 0) {
             ApplicationLog::properties($affiliates)
                           ->group('affiliates')
-                          ->model(Visitor::get())
+                          ->model(Visit::get())
                           ->log('Affiliates captured');
         }
 
@@ -294,13 +293,12 @@ class PaylinkService
          * have priority over the default values from this class.
          *
          * There are MANDATORY keys needs always need to be present:
-         * visitor_id : The visitor id that started the checkout.
+         * visit_id : The visit id that started the checkout.
          * auth_hashcode : A randomized code, so we don't have DDOS attacks.
-         *
          */
         $passthrough = array_merge([
-            'visitor_id' => Visitor::get()->id,
-            'auth_hashcode' => (string) Str::random(20)
+            'visit_id' => Visit::get()->id,
+            'auth_hashcode' => (string) Str::random(20),
         ], $this->passthrough);
 
         /**
@@ -311,7 +309,7 @@ class PaylinkService
 
         /**
          * The return url is the url suffix that is redirected after
-         * the visitor buys the course at the end of the checkout
+         * the visit source buys the course at the end of the checkout
          * process.
          */
         $returnUrl = url(config('eduka-nereus.paddle.return_url'));
