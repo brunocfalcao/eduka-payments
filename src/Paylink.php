@@ -3,6 +3,7 @@
 namespace Eduka\Payments;
 
 use Eduka\Analytics\Services\Affiliate;
+use Eduka\Analytics\Services\Visit;
 use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
 use Illuminate\Support\Str;
@@ -61,7 +62,7 @@ class PaylinkService
         // Obtain the current product uuid to check the paylink session key.
         $this->uuid = $this->product()->uuid;
 
-        if (! session()->has('eduka-payments:paylink:'.$this->uuid)) {
+        if (! session()->has('eduka:payments:paylink:'.$this->uuid)) {
             $refresh = true;
         }
 
@@ -71,7 +72,7 @@ class PaylinkService
         }
 
         // No matter what refresh/non-refresh scenario, we will have a session.
-        $this->data = session('eduka-payments:paylink:'.$this->uuid);
+        $this->data = session('eduka:payments:paylink:'.$this->uuid);
     }
 
     protected function compute()
@@ -90,7 +91,7 @@ class PaylinkService
     protected function store()
     {
         $uuid = $this->uuid;
-        session(["eduka-payments:paylink:$uuid" => $this->data]);
+        session(["eduka:payments:paylink:$uuid" => $this->data]);
 
         return $this;
     }

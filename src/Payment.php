@@ -76,7 +76,7 @@ class PaymentService
         // Obtain the current product uuid to check the session key.
         $this->uuid = $this->product()->uuid;
 
-        if (! session()->has('eduka-payments:payment:'.$this->uuid)) {
+        if (! session()->has('eduka:payments:payment:'.$this->uuid)) {
             $refresh = true;
         }
 
@@ -89,7 +89,7 @@ class PaymentService
             $this->store();
             $msg = 'Paylink generated';
         } else {
-            $this->data = session('eduka-payments:payment:'.$this->uuid);
+            $this->data = session('eduka:payments:payment:'.$this->uuid);
             $msg = 'Paylink retrieved session';
         }
 
@@ -106,7 +106,7 @@ class PaymentService
     protected function store()
     {
         $uuid = $this->uuid;
-        session(["eduka-payments:payment:$uuid" => $this->data]);
+        session(["eduka:payments:payment:$uuid" => $this->data]);
 
         return $this;
     }
