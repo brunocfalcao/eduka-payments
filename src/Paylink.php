@@ -46,7 +46,7 @@ class PaylinkService
         $refresh = false;
 
         // .env value true? Then override session.
-        if (env('REFRESH_PAYLINK_SESSION') == true) {
+        if (env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true) {
             $refresh = true;
         }
 
