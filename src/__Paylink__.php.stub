@@ -2,7 +2,6 @@
 
 namespace Eduka\Payments;
 
-use Brunocfalcao\Cerebrus\ConcernsSessionPersistence;
 use Eduka\Analytics\Services\Affiliate;
 use Eduka\Analytics\Services\Visit;
 use Eduka\Cube\Services\ApplicationLog;
@@ -21,7 +20,6 @@ class Paylink
 class PaylinkService
 {
     use InteractsWithProducts;
-    use ConcernsSessionPersistence;
 
     private $uuid;
     private $payload = [];
@@ -31,28 +29,50 @@ class PaylinkService
 
     public function __construct()
     {
-        // Default instanciation.
-        $this->data = new \StdClass();
-
-        // Get product uuid to be used in different paylink product sessions.
-        $this->product = $this->product();
-
-        $this->withPrefix('eduka:payments:paylink:'.$this->product->uuid)
-             ->forceRefreshIf(function () {
-                return
-                    env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true ||
-                    ! $this->product->using_session;
-             })
-             ->getOr(function () {
-                $this->compute();
-
-                return $this->data;
-             });
+        //
     }
 
     public static function new(...$args)
     {
         return new self(...$args);
+    }
+
+    protected function refresh()
+    {
+        // Default instanciation.
+        $this->data = new \StdClass();
+
+        // By default, the data refresh is not needed.
+        $refresh = false;
+
+        // .env value true? Then override session.
+        if (env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true) {
+            $refresh = true;
+        }
+
+        /**
+         * The paylink session mode is also managed from the product session
+         * mode. Meaning when it's disabled, it also disables the session
+         * verification for the paylink.
+         */
+        if (! $this->product()->using_session) {
+            $refresh = true;
+        }
+
+        // Obtain the current product uuid to check the paylink session key.
+        $this->uuid = $this->product()->uuid;
+
+        if (! session()->has('eduka:payments:paylink:'.$this->uuid)) {
+            $refresh = true;
+        }
+
+        if ($refresh) {
+            $this->compute();
+            $this->store();
+        }
+
+        // No matter what refresh/non-refresh scenario, we will have a session.
+        $this->data = session('eduka:payments:paylink:'.$this->uuid);
     }
 
     protected function compute()
@@ -66,6 +86,14 @@ class PaylinkService
          * Result is stored in the $this->data variable.
          */
         $this->callPaddleApi();
+    }
+
+    protected function store()
+    {
+        $uuid = $this->uuid;
+        session(["eduka:payments:paylink:$uuid" => $this->data]);
+
+        return $this;
     }
 
     public function payload(array $payload)
@@ -314,7 +342,7 @@ class PaylinkService
 
     public function data(string $property)
     {
-        $this->data = $this->session();
+        $this->refresh();
 
         return $this->data->$property;
     }

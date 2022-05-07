@@ -4,7 +4,7 @@ namespace Eduka\Payments\Concerns;
 
 trait InteractsWithProducts
 {
-    protected $type;
+    protected $type = 'default';
 
     public function type(string $type = 'default')
     {
