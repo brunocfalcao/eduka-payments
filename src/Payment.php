@@ -39,11 +39,20 @@ class PaymentService
      *
      * @return void
      */
-    public function data()
+
+    /**
+     * Refreshes the checkout/product data if necessary, and returns the
+     * price/checkout data object.
+     *
+     * @param  string $path
+     *
+     * @return string
+     */
+    public function data(string $path)
     {
         $this->refresh();
 
-        return $this->data;
+        return data_get($this->data, $path);
     }
 
     /**
@@ -51,8 +60,8 @@ class PaymentService
      * The refresh is basically verifying if:
      * (The session exists and
      * The session product uuid is the same as the one from the session) or
-     * .env REFRESH_PAYMENT_SESSION=true (this is a global override) and
-     * products.use_session = true.
+     * .env EDUKA_FORCE_REFRESH_PAYMENT_SESSION=true (this is a global override)
+     * and products.use_session = true.
      *
      * @return void
      */
@@ -62,6 +71,11 @@ class PaymentService
 
         // .env true? Then override session.
         if (env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true) {
+            $refresh = true;
+        }
+
+        // or EDUKA_IP_SIMULATION is set?
+        if (env('EDUKA_IP_SIMULATION') != null) {
             $refresh = true;
         }
 
@@ -255,10 +269,18 @@ class PaymentService
          * Compute ip address. On this case we need to check if the
          * products.testing_ip is not null.
          *
+         * Also, if there is a EDUKA_IP_SIMULATION then it will take
+         * precedence over the product.testing_ip value.
+         *
          * Then we need to override the customer_ip with this testing ip
          * in case it exists.
          */
         $ip = $this->product()->testing_ip ?? public_ip();
+
+        // Precedence override (mostly for testing reasons).
+        if (env('EDUKA_IP_SIMULATION') != null) {
+            $ip = env('EDUKA_IP_SIMULATION');
+        }
 
         $this->data = (object)
                 (Paddle::checkout()

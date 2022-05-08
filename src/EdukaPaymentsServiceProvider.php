@@ -2,11 +2,8 @@
 
 namespace Eduka\Payments;
 
-use Eduka\Payments\Directives\Checkout;
-use Eduka\Payments\Directives\Paylink;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use ImLiam\BladeHelper\Facades\BladeHelper;
 
 final class EdukaPaymentsServiceProvider extends ServiceProvider
 {
@@ -21,7 +18,6 @@ final class EdukaPaymentsServiceProvider extends ServiceProvider
 
         if (! $this->app->runningInConsole()) {
             $this->overridePaymentConfiguration();
-            $this->loadDirectives();
         }
 
         $this->importMigrations();
@@ -30,36 +26,6 @@ final class EdukaPaymentsServiceProvider extends ServiceProvider
     protected function importMigrations(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-    }
-
-    protected function loadDirectives()
-    {
-        /**
-         * The @checkout directive works by passing 2 possible values:.
-         *
-         * @checkout(true);
-         * @checkout('paddle.price') as example. It's an array conversion from
-         * the Payment::$data StdClass. Please check the Payment->compute()
-         * method to see what possible data structure values can be fetched.
-         */
-        BladeHelper::directive(
-            'checkout',
-            function (string|bool $path) {
-                return (new Checkout())($path);
-            }
-        );
-
-        BladeHelper::directive(
-            'paylink',
-            function (string|bool $path, array $payload = [], array $passthrough = [], string $type = 'default') {
-                return (new Paylink())(
-                    $path,
-                    $payload,
-                    $passthrough,
-                    $type
-                );
-            }
-        );
     }
 
     /**

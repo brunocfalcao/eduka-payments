@@ -312,10 +312,8 @@ class PaylinkService
         $this->data->success = true;
     }
 
-    public function data(string $property)
+    public function data(string $path)
     {
-        $this->data = $this->session();
-
-        return $this->data->$property;
+        return data_get($this->session(), $path);
     }
 }
