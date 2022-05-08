@@ -246,9 +246,7 @@ class PaylinkService
     {
         // Copy this product type to the new payment type instantiation.
         $this->price = Payment::type($this->type)
-                              ->data()
-                              ->checkout
-                              ->price;
+                              ->data('checkout.price');
     }
 
     protected function callPaddleApi()
