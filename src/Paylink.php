@@ -3,6 +3,7 @@
 namespace Eduka\Payments;
 
 use Brunocfalcao\Cerebrus\ConcernsSessionPersistence;
+use Brunocfalcao\Chrono\Chrono;
 use Eduka\Analytics\Services\Affiliate;
 use Eduka\Analytics\Services\Visit;
 use Eduka\Cube\Services\ApplicationLog;
