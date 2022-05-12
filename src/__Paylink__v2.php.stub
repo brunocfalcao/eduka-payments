@@ -40,28 +40,9 @@ class PaylinkService
         $this->withPrefix('eduka:payments:paylink:'.$this->product->uuid)
              ->forceRefreshIf(function () {
 
-                $result = false;
-
-                if (env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true) {
-                    $result = true;
-                    info('[Paylink] Forcing refresh because of EDUKA_FORCE_REFRESH_PAYMENT_SESSION = true');
-                }
-
-                if (env('EDUKA_IP_SIMULATION') !== null) {
-                    $result = true;
-                    info('[Paylink] Forcing refresh because of EDUKA_IP_SIMULATION is filled');
-                }
-
-                if (!$this->product->using_session) {
-                    $result = true;
-                    info('[Paylink] Forcing refresh because product not using using_session');
-                }
-
-                /*
                 $result = env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true ||
                           env('EDUKA_IP_SIMULATION') !== null ||
                           ! $this->product->using_session;
-                */
 
                 return $result;
              })
@@ -335,8 +316,6 @@ class PaylinkService
 
     public function data(string $path)
     {
-        info('[Paylink] Getting ' . $path);
-        dd('--');
         return data_get($this->session(), $path);
     }
 }

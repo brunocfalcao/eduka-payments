@@ -44,8 +44,7 @@ class PaymentService
      * Refreshes the checkout/product data if necessary, and returns the
      * price/checkout data object.
      *
-     * @param  string $path
-     *
+     * @param  string  $path
      * @return string
      */
     public function data(string $path)
