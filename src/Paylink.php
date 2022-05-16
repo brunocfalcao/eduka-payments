@@ -44,17 +44,14 @@ class PaylinkService
 
                 if (env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true) {
                     $result = true;
-                    info('[Paylink] Forcing refresh because of EDUKA_FORCE_REFRESH_PAYMENT_SESSION = true');
                 }
 
                 if (env('EDUKA_IP_SIMULATION') !== null) {
                     $result = true;
-                    info('[Paylink] Forcing refresh because of EDUKA_IP_SIMULATION is filled');
                 }
 
-                if (!$this->product->using_session) {
+                if (! $this->product->using_session) {
                     $result = true;
-                    info('[Paylink] Forcing refresh because product not using using_session');
                 }
 
                 /*
@@ -87,7 +84,6 @@ class PaylinkService
          *
          * Result is stored in the $this->data variable.
          */
-        info('[Paylink] Calling Paddle API due to no session');
         $this->callPaddleApi();
     }
 
@@ -335,8 +331,6 @@ class PaylinkService
 
     public function data(string $path)
     {
-        info('[Paylink] Getting ' . $path);
-        dd('--');
         return data_get($this->session(), $path);
     }
 }

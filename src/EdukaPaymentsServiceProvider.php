@@ -14,8 +14,6 @@ final class EdukaPaymentsServiceProvider extends ServiceProvider
 
     public function boot()
     {
-        info('[EdukaPayments][ServiceProvider] Start');
-
         $this->loadRoutes();
 
         if (! $this->app->runningInConsole()) {
@@ -23,8 +21,6 @@ final class EdukaPaymentsServiceProvider extends ServiceProvider
         }
 
         $this->importMigrations();
-
-        info('[EdukaPayments][ServiceProvider] Stop');
     }
 
     protected function importMigrations(): void

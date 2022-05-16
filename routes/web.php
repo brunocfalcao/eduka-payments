@@ -8,6 +8,9 @@
 */
 
 Route::get('/paylink', function () {
-    return view('welcome');
+
+  /**
+   * This route generates a paylink url, and redirects to that url.
+   */
 })->name('checkout.paylink')
   ->middleware('throttle:3,1');

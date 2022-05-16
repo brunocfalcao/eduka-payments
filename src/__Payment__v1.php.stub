@@ -2,8 +2,6 @@
 
 namespace Eduka\Payments;
 
-use Brunocfalcao\Cerebrus\ConcernsSessionPersistence;
-use Brunocfalcao\Chrono\Chrono;
 use Eduka\Cube\Models\Country;
 use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
@@ -21,39 +19,13 @@ class Payment
 class PaymentService
 {
     use InteractsWithProducts;
-    use ConcernsSessionPersistence;
 
     private $uuid;
     private $data;
 
     public function __construct()
     {
-        $this->withPrefix('eduka:payments:payment:'.$this->product()->uuid)
-             ->forceRefreshIf(function () {
-
-                $refresh = false;
-
-                // EDUKA_FORCE_REFRESH_PAYMENT_SESSION true?
-                if (env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true) {
-                    $refresh = true;
-                }
-
-                // or EDUKA_IP_SIMULATION is set?
-                if (env('EDUKA_IP_SIMULATION') != null) {
-                    $refresh = true;
-                }
-
-                // Product type not using session mode? Then override session.
-                if (! $this->product()->using_session) {
-                    $refresh = true;
-                }
-
-                return $refresh;
-             })
-             ->getOr(function () {
-                $this->compute();
-                return $this->data;
-             });
+        //
     }
 
     public static function new(...$args)
@@ -61,11 +33,100 @@ class PaymentService
         return new self(...$args);
     }
 
+    /**
+     * Refreshes the checkout/product data if necessary, and returns the
+     * price/checkout data object.
+     *
+     * @return void
+     */
+
+    /**
+     * Refreshes the checkout/product data if necessary, and returns the
+     * price/checkout data object.
+     *
+     * @param  string  $path
+     * @return string
+     */
     public function data(string $path)
     {
-        return data_get($this->session(), $path);
+        $this->refresh();
+
+        return data_get($this->data, $path);
     }
 
+    /**
+     * Refresh payment session for the course product tag, if needed.
+     * The refresh is basically verifying if:
+     * (The session exists and
+     * The session product uuid is the same as the one from the session) or
+     * .env EDUKA_FORCE_REFRESH_PAYMENT_SESSION=true (this is a global override)
+     * and products.use_session = true.
+     *
+     * @return void
+     */
+    protected function refresh()
+    {
+        $refresh = false;
+
+        // EDUKA_FORCE_REFRESH_PAYMENT_SESSION true?
+        if (env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true) {
+            $refresh = true;
+        }
+
+        // or EDUKA_IP_SIMULATION is set?
+        if (env('EDUKA_IP_SIMULATION') != null) {
+            $refresh = true;
+        }
+
+        // Product type not using session mode? Then override session.
+        if (! $this->product()->using_session) {
+            $refresh = true;
+        }
+
+        // Obtain the current product to make additional verifications.
+        $this->uuid = $this->product()->uuid;
+
+        // Do we have a session with this current uuid?
+        if (! session()->has('eduka:payments:payment:'.$this->uuid)) {
+            $refresh = true;
+        }
+
+        /**
+         * Verify the product session canonical uuid. If it's different
+         * then we should refresh the session.
+         */
+        if ($refresh) {
+            $this->compute();
+            $this->store();
+            $msg = 'Paylink generated';
+        } else {
+            $this->data = session('eduka:payments:payment:'.$this->uuid);
+            $msg = 'Paylink retrieved session';
+        }
+
+        ApplicationLog::properties([
+            'price' => $this->data->checkout->price,
+            'discount' => $this->data->discount->percentage.'%',
+            'country' => $this->data->customer_country,
+        ])
+                      ->group('paylink')
+                      ->model($this->product())
+                      ->log($msg);
+    }
+
+    protected function store()
+    {
+        $uuid = $this->uuid;
+        session(["eduka:payments:payment:$uuid" => $this->data]);
+
+        return $this;
+    }
+
+    /**
+     * Conversion of the paddle raw data into a more sanitized data.
+     *
+     * @return void
+     */
     protected function sanitizePaddlePricingData()
     {
         $data = $this->data;
@@ -190,19 +251,10 @@ class PaymentService
              */
             $this->data->checkout->price -= $this->data->ppp->discount_amount;
         }
-
-        return $this->data;
     }
 
     protected function usingPPP()
     {
-        /**
-         * The verification of using purchase power parity is focused in
-         * several possible conditions:
-         * The url has /?ppp
-         * The product has .using_ppp = true
-         * T
-         */
         return Request::input('ppp') ||
                $this->product()->using_ppp ||
                env('EDUKA_FORCE_PPP') == true;
