@@ -3,9 +3,7 @@
 namespace Eduka\Payments;
 
 use Brunocfalcao\Cerebrus\ConcernsSessionPersistence;
-use Brunocfalcao\Chrono\Chrono;
 use Eduka\Cube\Models\Country;
-use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
 use Illuminate\Support\Facades\Request;
 use ProtoneMedia\LaravelPaddle\Paddle;
@@ -52,6 +50,7 @@ class PaymentService
              })
              ->getOr(function () {
                 $this->compute();
+
                 return $this->data;
              });
     }
@@ -201,7 +200,7 @@ class PaymentService
          * several possible conditions:
          * The url has /?ppp
          * The product has .using_ppp = true
-         * T
+         * T.
          */
         return Request::input('ppp') ||
                $this->product()->using_ppp ||
