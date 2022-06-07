@@ -4,6 +4,7 @@ namespace Eduka\Payments;
 
 use Brunocfalcao\Cerebrus\ConcernsSessionPersistence;
 use Eduka\Analytics\Services\Affiliate;
+use Eduka\Analytics\Services\Referrer;
 use Eduka\Analytics\Services\Visit;
 use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
@@ -24,7 +25,6 @@ class PaylinkService
     use ConcernsSessionPersistence;
 
     private $uuid;
-    private $payload = [];
     private $passthrough = [];
     private $data;
     private $price;
@@ -42,7 +42,7 @@ class PaylinkService
 
                 $result = false;
 
-                if (env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true) {
+                if (env('EDUKA_FORCE_PAYMENT_REFRESH') == true) {
                     $result = true;
                 }
 
@@ -50,15 +50,16 @@ class PaylinkService
                     $result = true;
                 }
 
+                // Is this product allowed to used session?
                 if (! $this->product->using_session) {
                     $result = true;
                 }
 
-                /*
-                $result = env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true ||
-                          env('EDUKA_IP_SIMULATION') !== null ||
-                          ! $this->product->using_session;
-                */
+                // Is the current referrer different from the referrer session?
+                if (Referrer::get() != Referrer::current() &&
+                    Referrer::current() !== null) {
+                    $result = true;
+                }
 
                 return $result;
              })
@@ -85,13 +86,6 @@ class PaylinkService
          * Result is stored in the $this->data variable.
          */
         $this->callPaddleApi();
-    }
-
-    public function payload(array $payload)
-    {
-        $this->payload = $payload;
-
-        return $this;
     }
 
     public function passthrough(array $passthrough)
@@ -329,8 +323,12 @@ class PaylinkService
         $this->data->success = true;
     }
 
-    public function data(string $path)
+    public function data(string $path = null)
     {
-        return data_get($this->session(), $path);
+        if ($path) {
+            return data_get($this->session(), $path);
+        } else {
+            return $this->session();
+        }
     }
 }

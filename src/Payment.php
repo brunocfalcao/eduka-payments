@@ -31,8 +31,8 @@ class PaymentService
 
                 $refresh = false;
 
-                // EDUKA_FORCE_REFRESH_PAYMENT_SESSION true?
-                if (env('EDUKA_FORCE_REFRESH_PAYMENT_SESSION') == true) {
+                // EDUKA_FORCE_PAYMENT_REFRESH true?
+                if (env('EDUKA_FORCE_PAYMENT_REFRESH') == true) {
                     $refresh = true;
                 }
 
