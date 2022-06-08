@@ -17,11 +17,15 @@ class PaymentSucceeded
 
     public function handle(EventPaymentSucceeded $event)
     {
+        info($event);
+
         /**
          * Called from the paddle webhook.
          *
          * Operations:
-         * - Verify if the passthrough has a 'auth_hashcode' value.
+         * - Verify if the passthrough has a 'auth_hashcode' value valid in
+         *   the database.
+         * - Verify if the post request has the minimum data keys.
          * - Re-structure the $event object into a sanitized collection.
          * - Validate the mandatory data (using a validation object).
          * - Connect the visitor id with the user id (table visitors).
