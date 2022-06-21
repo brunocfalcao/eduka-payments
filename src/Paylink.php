@@ -8,6 +8,7 @@ use Eduka\Analytics\Services\Referrer;
 use Eduka\Analytics\Services\Visit;
 use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
+use Eduka\Payments\Hashcode;
 use Illuminate\Support\Str;
 use ProtoneMedia\LaravelPaddle\Paddle;
 
@@ -278,11 +279,15 @@ class PaylinkService
          *
          * There are MANDATORY keys needs always need to be present:
          * visit_id : The visit id that started the checkout.
-         * auth_hashcode : A randomized code, so we don't have DDOS attacks.
+         * hashcode : A randomized code, so we don't have DDOS attacks.
+         *            This code is recorded into the database, for later
+         *            burning.
          */
+        $hashcode = Hashcode::create();
+
         $passthrough = array_merge([
             'visit_id' => Visit::get()->id,
-            'auth_hashcode' => (string) Str::random(20),
+            'hashcode' => $authcode,
         ], $this->passthrough);
 
         /**

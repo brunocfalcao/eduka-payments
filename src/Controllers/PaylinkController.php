@@ -21,7 +21,7 @@ class PaylinkController extends Controller
          * contexted course, for security reasons, so no one can directly call the
          * /paylink url without sourcing from an approved course domain.
          */
-        if (!array_key_exists('HTTP_REFERER', $_SERVER)) {
+        if (! array_key_exists('HTTP_REFERER', $_SERVER)) {
             throw new \Exception('Security request error. Please retry again');
         }
 

@@ -2,8 +2,12 @@
 
 namespace Eduka\Payments;
 
+use Eduka\Payments\Commands\WebhookTest;
+use Eduka\Payments\Listeners\ProcessPayment;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use ProtoneMedia\LaravelPaddle\Events\PaymentSucceeded;
 
 final class EdukaPaymentsServiceProvider extends ServiceProvider
 {
@@ -20,7 +24,21 @@ final class EdukaPaymentsServiceProvider extends ServiceProvider
             $this->overridePaymentConfiguration();
         }
 
+        if ($this->app->runningInConsole()) {
+            $this->loadCommands();
+        }
+
         $this->importMigrations();
+
+        $this->registerListeners();
+    }
+
+    protected function registerListeners()
+    {
+        Event::listen(
+            PaymentSucceeded::class,
+            [ProcessPayment::class, 'handle']
+        );
     }
 
     protected function importMigrations(): void
@@ -59,5 +77,12 @@ final class EdukaPaymentsServiceProvider extends ServiceProvider
         ->group(function () use ($routesPath) {
             include $routesPath;
         });
+    }
+
+    protected function loadCommands()
+    {
+        $this->commands([
+            WebhookTest::class,
+        ]);
     }
 }

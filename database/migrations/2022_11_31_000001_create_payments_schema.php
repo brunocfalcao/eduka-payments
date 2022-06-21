@@ -20,7 +20,15 @@ class CreatePaymentsSchema extends Migration
 {
     public function up()
     {
-        Schema::create('payments_webbook', function (Blueprint $table) {
+        Schema::create('hashcodes', function (Blueprint $table) {
+            $table->id();
+            $table->string('code');
+
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::create('payment_webhooks', function (Blueprint $table) {
             $table->id();
 
             /**
@@ -34,7 +42,6 @@ class CreatePaymentsSchema extends Migration
                 'balance_fee',
                 'balance_gross',
                 'balance_tax',
-                'checkout_id',
                 'country',
                 'coupon',
                 'currency',
@@ -63,15 +70,24 @@ class CreatePaymentsSchema extends Migration
                       ->nullable();
             }
 
+            $table->string('checkout_id')
+                  ->unique();
+
             $table->foreignId('visitor_id')
                   ->nullable();
 
             $table->foreignId('user_id')
                   ->nullable();
 
-            $table->timestamps();
+            $table->boolean('is_processed')
+                  ->default(false)
+                  ->comment('When is processed, it means validations ok, and email sent');
 
-            $table->engine = 'InnoDB';
+            $table->string('error_message')
+                  ->nullable()
+                  ->comment('In case there is an error in the job, we can capture the message here');
+
+            $table->timestamps();
         });
 
         $basePath = __DIR__.'/../../';
