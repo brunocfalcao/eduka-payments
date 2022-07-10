@@ -3,7 +3,9 @@
 namespace Eduka\Payments;
 
 use Brunocfalcao\Cerebrus\ConcernsSessionPersistence;
+use Brunocfalcao\Chrono\Chrono;
 use Eduka\Cube\Models\Country;
+use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
 use Illuminate\Support\Facades\Request;
 use ProtoneMedia\LaravelPaddle\Paddle;
@@ -226,6 +228,8 @@ class PaymentService
             $ip = env('EDUKA_IP_SIMULATION');
         }
 
+        Chrono::category('duration-checkout')->start();
+
         $this->data = (object)
                 (Paddle::checkout()
                 ->getPrices([
@@ -233,5 +237,8 @@ class PaymentService
                     'customer_ip' => $ip,
                 ])
                 ->send());
+
+        $duration = Chrono::category('duration-checkout')->stop();
+        ApplicationLog::group('duration-checkout ')->log($duration);
     }
 }

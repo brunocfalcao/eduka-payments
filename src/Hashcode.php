@@ -60,7 +60,7 @@ class HashcodeService
     /**
      * Checks if an hashcode exists and it's NOT burnt.
      *
-     * @param  string $hashcode [description]
+     * @param  string  $hashcode [description]
      * @return [type]           [description]
      */
     public function exists()
@@ -78,7 +78,7 @@ class HashcodeService
     /**
      * Burn hashcode. Basically soft deletes it.
      *
-     * @param  string $hashcode
+     * @param  string  $hashcode
      * @return bool
      */
     public function burn()
@@ -86,6 +86,7 @@ class HashcodeService
         // Means, it's not yet soft deleted.
         if ($this->exists($this->hashcode)) {
             HashcodeModel::where('code', $this->hashcode)->delete();
+
             return;
         }
 
@@ -113,9 +114,8 @@ class HashcodeService
         $data = HashcodeModel::withTrashed()
                              ->firstWhere('code', $this->hashcode);
 
-
-        if (!$data) {
+        if (! $data) {
             throw new \Exception('Hashcode unknown. Security exception');
-        };
+        }
     }
 }

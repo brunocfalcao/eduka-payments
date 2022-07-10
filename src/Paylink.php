@@ -9,8 +9,6 @@ use Eduka\Analytics\Services\Referrer;
 use Eduka\Analytics\Services\Visit;
 use Eduka\Cube\Services\ApplicationLog;
 use Eduka\Payments\Concerns\InteractsWithProducts;
-use Eduka\Payments\Hashcode;
-use Illuminate\Support\Str;
 use ProtoneMedia\LaravelPaddle\Paddle;
 
 class Paylink
@@ -240,7 +238,6 @@ class PaylinkService
         if (count($affiliates) > 0) {
             ApplicationLog::properties($affiliates)
                           ->group('affiliates')
-                          ->model(Visit::get())
                           ->log('Affiliates captured');
         }
 
@@ -288,7 +285,7 @@ class PaylinkService
 
         $passthrough = array_merge([
             'visit_id' => Visit::get()->id,
-            'hashcode' => $authcode,
+            'hashcode' => $hashcode,
         ], $this->passthrough);
 
         /**
@@ -304,6 +301,7 @@ class PaylinkService
          */
         $returnUrl = url(config('eduka-nereus.paddle.return_url'));
 
+        Chrono::category('duration-paylink')->start();
         $paylink = Paddle::product()
                                ->generatePayLink()
                                ->productId($this->product()->paddle_product_id)
@@ -311,6 +309,9 @@ class PaylinkService
                                ->quantityVariable(0)
                                ->quantity(1)
                                ->prices(['USD:'.$this->price]);
+
+        $duration = Chrono::category('duration-paylink')->stop();
+        ApplicationLog::group('duration-paylink ')->log($duration);
 
         if ($passthrough) {
             $paylink->passthrough(json_encode($passthrough));

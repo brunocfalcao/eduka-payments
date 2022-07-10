@@ -57,20 +57,20 @@ class WebhookTest extends EdukaCommand
 
         $code = Hashcode::create();
 
-        $this->info('hashcode: ' . $code);
+        $this->info('hashcode: '.$code);
 
-        $this->info('Is burnt? ' . bool_to_str(Hashcode::with($code)->isBurnt()));
-        $this->info('Exists? ' . bool_to_str(Hashcode::with($code)->exists()));
-        $this->info('Existed? ' . bool_to_str(Hashcode::with($code)->existed()));
+        $this->info('Is burnt? '.bool_to_str(Hashcode::with($code)->isBurnt()));
+        $this->info('Exists? '.bool_to_str(Hashcode::with($code)->exists()));
+        $this->info('Existed? '.bool_to_str(Hashcode::with($code)->existed()));
 
-        $this->info('burning ' . $code);
+        $this->info('burning '.$code);
 
         Hashcode::with($code)->burn();
 
-        $this->info('Is burnt? ' . bool_to_str(Hashcode::with($code)->isBurnt()));
+        $this->info('Is burnt? '.bool_to_str(Hashcode::with($code)->isBurnt()));
 
-        $this->info('Exists? ' . bool_to_str(Hashcode::with($code)->exists()));
-        $this->info('Existed? ' . bool_to_str(Hashcode::with($code)->existed()));
+        $this->info('Exists? '.bool_to_str(Hashcode::with($code)->exists()));
+        $this->info('Existed? '.bool_to_str(Hashcode::with($code)->existed()));
 
         //PaymentSucceeded::fire($data, request());
     }
