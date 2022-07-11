@@ -20,7 +20,6 @@ class ProcessPayment
 
     public function handle(EventPaymentSucceeded $event)
     {
-
         /**
          * Convert the webhook data into an stdClass, and convert the
          * passthrough into an array.
@@ -34,14 +33,18 @@ class ProcessPayment
          * auth_hashcode.
          */
         if (! array_key_exists('visit_id', $data->passthrough) ||
-            ! array_key_exists('auth_hashcode', $data->passthrough)) {
+            ! array_key_exists('hashcode', $data->passthrough)) {
             ApplicationLog::properties($event->all())
-                      ->group('checkout error')
-                      ->log('Passthrough without minimum control keys (visit_id and/or auth_hashcode)')
-                      ->throw('Passthrough without minimum control keys (visit_id and/or auth_hashcode)');
+                      ->group('error-checkout')
+                      ->log('Webhook - Passthrough without minimum control keys (visit_id and/or hashcode)')
+                      ->throw('Webhook - Passthrough without minimum control keys (visit_id and/or hashcode)');
         }
 
-        // Verify if the auth_hashcode exists.
+        // Verify if the hashcode is not burnt.
+
+        if (! Hashcode::with($data->passthrough['hashcode'])->exists()) {
+            throw new \Exception('Hashcode is burnt or does not exist. Security error.');
+        }
 
         /**
          * There are several major steps now:
