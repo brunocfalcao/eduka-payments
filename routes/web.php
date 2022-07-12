@@ -22,13 +22,6 @@ Route::get('/paylink', [PaylinkController::class, 'checkout'])
      ->name('checkout.paylink')
      ->middleware('throttle:3,1');
 
-/*
-
- $referrer = $_SERVER['HTTP_REFERER'];
-
-  dd(course()->domain, domain($referrer), $_SERVER);
-
-  return redirect(Paylink::data('url'));
-
-)
- */
+Route::get('/paddle/transactions-webhook', function () {
+     return 'ok';
+});
