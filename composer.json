@@ -17,7 +17,7 @@
     "require": {
         "php": "^8.0",
         "brunocfalcao/eduka-abstracts": "dev-master",
-        "illuminate/contracts": "^9.0"
+        "illuminate/contracts": "^10.0"
     },
     "autoload": {
         "psr-4": {
