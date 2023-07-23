@@ -13,6 +13,5 @@ class PaymentsServiceProvider extends EdukaServiceProvider
 
     public function register()
     {
-        //
     }
 }
