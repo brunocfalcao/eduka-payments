@@ -19,7 +19,8 @@
         "brunocfalcao/eduka-abstracts": "dev-master",
         "illuminate/contracts": "^10.0",
         "lemonsqueezy/laravel": "^0.2.1",
-        "guzzlehttp/guzzle": "^7.0"
+        "guzzlehttp/guzzle": "^7.0",
+        "brunocfalcao/laravel-helpers": "dev-master"
     },
     "autoload": {
         "psr-4": {

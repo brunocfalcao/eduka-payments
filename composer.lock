@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c446a000e857fd769acb09649c93266f",
+    "content-hash": "702fb0fdadb0ed3dc4751d4ca8816473",
     "packages": [
         {
             "name": "brick/math",
@@ -107,6 +107,60 @@
                 "source": "https://github.com/brunocfalcao/eduka-abstracts/tree/master"
             },
             "time": "2023-05-02T22:23:27+00:00"
+        },
+        {
+            "name": "brunocfalcao/laravel-helpers",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/brunocfalcao/laravel-helpers.git",
+                "reference": "22d28d25da7364fe182f1f16713803a49f5b462c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/brunocfalcao/laravel-helpers/zipball/22d28d25da7364fe182f1f16713803a49f5b462c",
+                "reference": "22d28d25da7364fe182f1f16713803a49f5b462c",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^10.0",
+                "php": "^8.1"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Brunocfalcao\\LaravelHelpers\\LaravelHelpersServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Brunocfalcao\\LaravelHelpers\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Bruno Falcão",
+                    "email": "bruno.c.falcao@brunofalcao.me",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Laravel Helpers - Swiss army knife to complement your web apps",
+            "homepage": "https://github.com/brunocfalcao/brunocfalcao/laravel-helpers",
+            "keywords": [
+                "brunocfalcao"
+            ],
+            "support": {
+                "issues": "https://github.com/brunocfalcao/laravel-helpers/issues",
+                "source": "https://github.com/brunocfalcao/laravel-helpers/tree/master"
+            },
+            "time": "2023-08-08T07:11:15+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -5454,7 +5508,8 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "brunocfalcao/eduka-abstracts": 20
+        "brunocfalcao/eduka-abstracts": 20,
+        "brunocfalcao/laravel-helpers": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
