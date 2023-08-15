@@ -64,6 +64,7 @@ class PaymentController extends Controller
         $this->session->set(NereusServiceProvider::NONCE_KEY, $nonceKey);
 
         event(new RedirectAwayToPaymentGateway($trackingID, LemonSqueezy::GATEWAY_ID));
+
         return redirect()->away($checkoutUrl);
     }
 
@@ -160,7 +161,7 @@ class PaymentController extends Controller
     public function handleWebhook(HttpRequest $request)
     {
         $json = $request->all();
-
+        
         event(new CallbackFromPaymentGateway($json['meta']['custom_data']['tracking_id'], LemonSqueezy::GATEWAY_ID));
 
         // check if user exists or not
