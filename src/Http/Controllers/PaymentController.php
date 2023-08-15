@@ -4,11 +4,13 @@ namespace Eduka\Payments\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Brunocfalcao\Cerebrus\Cerebrus;
+use Eduka\Cube\Actions\Coupon\FindCoupon;
 use Eduka\Cube\Models\Coupon;
 use Eduka\Cube\Models\Course;
 use Eduka\Cube\Models\Order;
 use Eduka\Cube\Models\User;
 use Eduka\Nereus\NereusServiceProvider;
+use Eduka\Payments\Actions\UserCountryFromIP;
 use Eduka\Payments\Events\CallbackFromPaymentGateway;
 use Eduka\Payments\Events\RedirectAwayToPaymentGateway;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
@@ -19,7 +21,6 @@ use Eduka\Payments\Notifications\{
 };
 use Exception;
 use Illuminate\Http\Request as HttpRequest;
-use Hibit\GeoDetect;
 use Hibit\Country\CountryRecord;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -44,10 +45,11 @@ class PaymentController extends Controller
             return redirect()->back();
         }
 
-        $userCountry = self::getUserCountry($request->ip2());
+        // @todo refactor
+        $userCountry = UserCountryFromIP::get($request);
 
         if ($userCountry) {
-            $this->ensureCouponOnLemonSqueezy($userCountry);
+            $this->ensureCouponOnLemonSqueezy($userCountry, $this->course->id);
         }
 
         $paymentsApi = new LemonSqueezy($this->lemonSqueezyApiKey);
@@ -85,9 +87,9 @@ class PaymentController extends Controller
         }
     }
 
-    private function ensureCouponOnLemonSqueezy(CountryRecord $country)
+    private function ensureCouponOnLemonSqueezy(CountryRecord $country, int $courseId)
     {
-        $coupon = Coupon::where('country_iso_code', strtoupper($country->getIsoCode()))->first();
+        $coupon = FindCoupon::fromCountryRecord(strtoupper($country->getIsoCode()), $courseId);
         // coupon does not exists in database
         if (!$coupon) {
             return false;
@@ -155,21 +157,6 @@ class PaymentController extends Controller
         Log::error($message, $data);
     }
 
-    public static function getUserCountry(string $ip): CountryRecord|null
-    {
-        try {
-            $geoDetect = new GeoDetect();
-            return $geoDetect->getCountry($ip);
-        } catch (\Exception $e) {
-            // pass
-            Log::error('could not determine user country', [
-                'message' => $e->getMessage()
-            ]);
-        }
-
-        return null;
-    }
-
     public function handleWebhook(HttpRequest $request)
     {
         $json = $request->all();
@@ -182,15 +169,20 @@ class PaymentController extends Controller
         list($user, $newUser) = $this->findOrCreateUser($userEmail, $json['data']['attributes']['user_name']);
         // if yes, use user id
         // if not, create and then use user id
-        $course = $this->session->get(NereusServiceProvider::COURSE_SESSION_KEY);
+        $courseId = $json['meta']['custom_data']['course_id'];
+        $course = Course::find($courseId);
 
-        // create order
-        // send email
+        if(! $course) {
+            Log::error('could not find course with id ' . $courseId);
+            return response()->json(['status' => 'ok']);
+        }
+
         // save everything in the response
         $order = Order::create([
             'user_id' => $user->id,
             'course_id' => $course->id,
             'response_body' => json_encode($json),
+            // @todo add more column
         ]);
 
         $user->notify(
@@ -198,6 +190,9 @@ class PaymentController extends Controller
                 new WelcomeNewUserToCourseNotification($course->name) :
                 new WelcomeExistingUserToCourseNotification($course->name)
         );
+
+        // attach user to course
+        $course->users()->attach($user->id);
 
         return response()->json(['status' => 'ok']);
     }
