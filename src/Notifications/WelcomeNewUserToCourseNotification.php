@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class WelcomeNewCourseUserNotification extends Notification
+class WelcomeNewUserToCourseNotification extends Notification
 {
     use Queueable;
 
@@ -36,7 +36,7 @@ class WelcomeNewCourseUserNotification extends Notification
     {
         // @todo update message
         return (new MailMessage)
-                    ->line('New Course Email Welcome to ' . $this->courseName)
+                    ->line('[Welcome new user mail] New Course Email Welcome to ' . $this->courseName)
                     ->action('Set password', url('/'))
                     ->line('We welcome you to this course, kindly use the reset password feature to set a new password!');
     }
