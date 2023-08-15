@@ -161,15 +161,8 @@ class PaymentController extends Controller
     public function handleWebhook(HttpRequest $request)
     {
         $json = $request->all();
-        
         event(new CallbackFromPaymentGateway($json['meta']['custom_data']['tracking_id'], LemonSqueezy::GATEWAY_ID));
 
-        // check if user exists or not
-        $userEmail = $json['data']['attributes']['user_email'];
-
-        list($user, $newUser) = $this->findOrCreateUser($userEmail, $json['data']['attributes']['user_name']);
-        // if yes, use user id
-        // if not, create and then use user id
         $courseId = $json['meta']['custom_data']['course_id'];
         $course = Course::find($courseId);
 
@@ -177,6 +170,11 @@ class PaymentController extends Controller
             Log::error('could not find course with id ' . $courseId);
             return response()->json(['status' => 'ok']);
         }
+
+        // check if user exists or not
+        $userEmail = $json['data']['attributes']['user_email'];
+
+        list($user, $newUser) = $this->findOrCreateUser($userEmail, $json['data']['attributes']['user_name']);
 
         // save everything in the response
         $order = Order::create([
