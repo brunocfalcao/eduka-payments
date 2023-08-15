@@ -36,7 +36,7 @@ class WelcomeExistingUserToCourseNotification extends Notification
     {
         return (new MailMessage)
                     ->line('[Welcome existing user mail] New Course Email Welcome to ' . $this->courseName)
-                    ->action('Set password', url('/'))
+                    ->action('Visit course', url('/')) // @todo change to course url
                     ->line('We welcome you to this course, kindly use the reset password feature to set a new password!');
     }
 
