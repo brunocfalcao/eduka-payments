@@ -10,6 +10,7 @@ use Eduka\Cube\Models\Course;
 use Eduka\Cube\Models\Order;
 use Eduka\Cube\Models\User;
 use Eduka\Nereus\NereusServiceProvider;
+use Eduka\Payments\Actions\LemonSqueezyCoupon;
 use Eduka\Payments\Actions\UserCountryFromIP;
 use Eduka\Payments\Events\CallbackFromPaymentGateway;
 use Eduka\Payments\Events\RedirectAwayToPaymentGateway;
@@ -65,7 +66,7 @@ class PaymentController extends Controller
 
         event(new RedirectAwayToPaymentGateway($trackingID, LemonSqueezy::GATEWAY_ID));
 
-        return redirect()->away($checkoutUrl);
+        return redirect()->away($checkoutUrl . "&aff=1234");
     }
 
     private function createCheckout(LemonSqueezy $paymentsApi, Course $course, string $nonceKey, string $trackingID)
@@ -105,7 +106,15 @@ class PaymentController extends Controller
         // create coupon on lemon squeezy and update remote reference id
         $code = $coupon->generateCodeForCountry(strtoupper($country->getName()), strtoupper($country->getIsoCode()));
 
-        $reference = $this->createCouponInLemonSqueezy($code, $coupon->discount_amount, $coupon->is_flat_discount);
+        $couponApi = new LemonSqueezy($this->lemonSqueezyApiKey);
+
+        $reference = (new LemonSqueezyCoupon)->create(
+            $couponApi,
+            $this->course->paymentProviderStoreId(),
+            $code,
+            $coupon->discount_amount,
+            $coupon->is_flat_discount,
+        );
 
         if (!$reference) {
             // could not create coupon in lemon squezzy
@@ -117,34 +126,6 @@ class PaymentController extends Controller
             'code' => $code,
             'remote_reference_id' => $reference,
         ]);
-    }
-
-    private function createCouponInLemonSqueezy(string $code, float $amount, bool $isFixed)
-    {
-        $couponApi = new LemonSqueezy($this->lemonSqueezyApiKey);
-
-        try {
-            $response = $couponApi
-                ->setStoreId($this->course->paymentProviderStoreId())
-                ->createDiscount($code, $amount, $isFixed);
-
-            $res = json_decode($response, true);
-
-            if (isset($res['errors'])) {
-                $this->log($res['errors'][0]['detail'], null, $res['errors']);
-                return false;
-            }
-
-            if (isset($res['data'])) {
-                return $res['data']['id'];
-            }
-
-            return false;
-        } catch (Exception $e) {
-            $this->log("could not create coupon in lemonsquzzy", $e);
-
-            return false;
-        }
     }
 
     private function log(string $message, ?Exception $e, array $data = [])
@@ -191,7 +172,7 @@ class PaymentController extends Controller
         );
 
         // attach user to course
-        $course->users()->attach($user->id);
+        $course->users()->sync([$user->id]);
 
         return response()->json(['status' => 'ok']);
     }

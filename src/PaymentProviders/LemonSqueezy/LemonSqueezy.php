@@ -16,6 +16,7 @@ class LemonSqueezy
     private string $apiKey;
 
     private const METHOD_POST = "POST";
+    private const METHOD_DELETE = "DELETE";
 
     public function __construct(string $apiKey)
     {
@@ -35,6 +36,12 @@ class LemonSqueezy
         return $this->makeRequest($path, self::METHOD_POST);
     }
 
+    private function delete(string $path)
+    {
+        return $this->makeRequest($path, self::METHOD_DELETE);
+    }
+
+
     public function createDiscount(string $code, float $amount, bool $isFixed)
     {
         $this->data['type'] = 'discounts';
@@ -47,6 +54,11 @@ class LemonSqueezy
         ];
 
         return $this->post("discounts");
+    }
+
+    public function deleteDiscount(string $id)
+    {
+        return $this->delete("discounts/" . $id);
     }
 
     private function makeRequest(string $path, string $method)

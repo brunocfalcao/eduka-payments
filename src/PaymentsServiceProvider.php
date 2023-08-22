@@ -4,6 +4,7 @@ namespace Eduka\Payments;
 
 use Eduka\Abstracts\Classes\EdukaServiceProvider;
 use Eduka\Analytics\Middleware\TrackVisit;
+use Eduka\Payments\Commands\SyncPurchasePowerParity;
 use Illuminate\Support\Facades\Route;
 
 class PaymentsServiceProvider extends EdukaServiceProvider
@@ -12,11 +13,20 @@ class PaymentsServiceProvider extends EdukaServiceProvider
     {
         $this->loadFrontendRoutes();
 
+        $this->loadCommands();
+
         parent::boot();
     }
 
     public function register()
     {
+    }
+
+    protected function loadCommands()
+    {
+        $this->commands([
+            SyncPurchasePowerParity::class,
+        ]);
     }
 
     protected function loadFrontendRoutes()
