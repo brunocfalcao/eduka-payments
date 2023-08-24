@@ -38,5 +38,8 @@
                 "Eduka\\Payments\\PaymentsServiceProvider"
             ]
         }
-    }
+    },
+
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
