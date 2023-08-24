@@ -2,9 +2,9 @@
 
 namespace Eduka\Payments\PurchasePowerParity;
 
-class PPPApiResponse
+class PppResponse
 {
-    protected $data;
+    protected array $data;
 
     public function __construct($jsonData)
     {
