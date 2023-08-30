@@ -2,7 +2,7 @@
 
 namespace Eduka\Payments\PurchasePowerParity;
 
-class PppResponse
+class PPPApiResponse
 {
     protected array $data;
 
@@ -40,5 +40,4 @@ class PppResponse
     {
         return $this->data['ppp']['ppp'];
     }
-
 }
