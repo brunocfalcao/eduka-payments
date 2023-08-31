@@ -18,11 +18,11 @@ class PaymentRedirectController extends Controller
     public function index(string $nonce)
     {
         $course = $this->session->get(NereusServiceProvider::COURSE_SESSION_KEY);
-        if(! $course) {
+        if (! $course) {
             return redirect('/');
         }
 
-        if (!$this->session->has(NereusServiceProvider::NONCE_KEY)) {
+        if (! $this->session->has(NereusServiceProvider::NONCE_KEY)) {
             return redirect()->route('welcome.default');
         }
 

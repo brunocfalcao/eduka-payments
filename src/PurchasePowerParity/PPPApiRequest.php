@@ -3,12 +3,13 @@
 namespace Eduka\Payments\PurchasePowerParity;
 
 use GuzzleHttp\Client;
-use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Exception\RequestException;
+use Psr\Http\Message\ResponseInterface;
 
 class PPPApiRequest
 {
     protected Client $client;
+
     protected string $ApiUrl = 'https://api.purchasing-power-parity.com';
 
     public function __construct()
@@ -39,5 +40,4 @@ class PPPApiRequest
     {
         return $response->getStatusCode() === 200;
     }
-
 }

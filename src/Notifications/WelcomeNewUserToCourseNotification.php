@@ -3,7 +3,6 @@
 namespace Eduka\Payments\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -36,7 +35,7 @@ class WelcomeNewUserToCourseNotification extends Notification
     {
         // @todo update message
         return (new MailMessage)
-                    ->line('[Welcome new user mail] New Course Email Welcome to ' . $this->courseName)
+                    ->line('[Welcome new user mail] New Course Email Welcome to '.$this->courseName)
                     ->action('Set password', url('/'))
                     ->line('We welcome you to this course, kindly use the reset password feature to set a new password!');
     }

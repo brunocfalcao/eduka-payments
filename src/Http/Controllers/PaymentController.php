@@ -14,13 +14,13 @@ use Eduka\Payments\Actions\LemonSqueezyCoupon;
 use Eduka\Payments\Actions\UserCountryFromIP;
 use Eduka\Payments\Events\CallbackFromPaymentGateway;
 use Eduka\Payments\Events\RedirectAwayToPaymentGateway;
+use Eduka\Payments\Notifications\WelcomeExistingUserToCourseNotification;
+use Eduka\Payments\Notifications\WelcomeNewUserToCourseNotification;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\Responses\CreatedCheckoutResponse;
-use Eduka\Payments\Notifications\WelcomeNewUserToCourseNotification;
-use Eduka\Payments\Notifications\WelcomeExistingUserToCourseNotification;
 use Exception;
-use Illuminate\Http\Request as HttpRequest;
 use Hibit\Country\CountryRecord;
+use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -28,7 +28,9 @@ use Illuminate\Support\Str;
 class PaymentController extends Controller
 {
     private Cerebrus $session;
+
     private string $lemonSqueezyApiKey;
+
     private Course $course;
 
     public function __construct(Cerebrus $session)
@@ -40,7 +42,7 @@ class PaymentController extends Controller
 
     public function redirectToCheckoutPage(HttpRequest $request)
     {
-        if (!$this->course) {
+        if (! $this->course) {
             return redirect()->back();
         }
 
@@ -64,7 +66,46 @@ class PaymentController extends Controller
 
         event(new RedirectAwayToPaymentGateway($trackingID, LemonSqueezy::GATEWAY_ID));
 
-        return redirect()->away($checkoutUrl . "&aff=1234");
+        return redirect()->away($checkoutUrl.'&aff=1234');
+    }
+
+    public function handleWebhook(HttpRequest $request)
+    {
+        $json = $request->all();
+        event(new CallbackFromPaymentGateway($json['meta']['custom_data']['tracking_id'], LemonSqueezy::GATEWAY_ID));
+
+        $courseId = $json['meta']['custom_data']['course_id'];
+        $course = Course::find($courseId);
+
+        if (! $course) {
+            Log::error('could not find course with id '.$courseId);
+
+            return response()->json(['status' => 'ok']);
+        }
+
+        // check if user exists or not
+        $userEmail = $json['data']['attributes']['user_email'];
+
+        [$user, $newUser] = $this->findOrCreateUser($userEmail, $json['data']['attributes']['user_name']);
+
+        // save everything in the response
+        $order = Order::create([
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'response_body' => json_encode($json),
+            // @todo add more column
+        ]);
+
+        $user->notify(
+            $newUser ?
+                new WelcomeNewUserToCourseNotification($course->name) :
+                new WelcomeExistingUserToCourseNotification($course->name)
+        );
+
+        // attach user to course
+        $course->users()->sync([$user->id]);
+
+        return response()->json(['status' => 'ok']);
     }
 
     private function createCheckout(LemonSqueezy $paymentsApi, Course $course, string $nonceKey, string $trackingID)
@@ -82,7 +123,7 @@ class PaymentController extends Controller
                 ->setVariantId($course->paymentProviderProductId())
                 ->createCheckout();
         } catch (\Exception $e) {
-            $this->log("could not create checkout", $e);
+            $this->log('could not create checkout', $e);
             throw $e;
         }
     }
@@ -91,7 +132,7 @@ class PaymentController extends Controller
     {
         $coupon = FindCoupon::fromCountryRecord(strtoupper($country->getIsoCode()), $courseId);
         // coupon does not exists in database
-        if (!$coupon) {
+        if (! $coupon) {
             return false;
         }
 
@@ -114,7 +155,7 @@ class PaymentController extends Controller
             $coupon->is_flat_discount,
         );
 
-        if (!$reference) {
+        if (! $reference) {
             // could not create coupon in lemon squezzy
             return false;
         }
@@ -137,50 +178,12 @@ class PaymentController extends Controller
         Log::error($message, $data);
     }
 
-    public function handleWebhook(HttpRequest $request)
-    {
-        $json = $request->all();
-        event(new CallbackFromPaymentGateway($json['meta']['custom_data']['tracking_id'], LemonSqueezy::GATEWAY_ID));
-
-        $courseId = $json['meta']['custom_data']['course_id'];
-        $course = Course::find($courseId);
-
-        if (! $course) {
-            Log::error('could not find course with id ' . $courseId);
-            return response()->json(['status' => 'ok']);
-        }
-
-        // check if user exists or not
-        $userEmail = $json['data']['attributes']['user_email'];
-
-        list($user, $newUser) = $this->findOrCreateUser($userEmail, $json['data']['attributes']['user_name']);
-
-        // save everything in the response
-        $order = Order::create([
-            'user_id' => $user->id,
-            'course_id' => $course->id,
-            'response_body' => json_encode($json),
-            // @todo add more column
-        ]);
-
-        $user->notify(
-            $newUser ?
-                new WelcomeNewUserToCourseNotification($course->name) :
-                new WelcomeExistingUserToCourseNotification($course->name)
-        );
-
-        // attach user to course
-        $course->users()->sync([$user->id]);
-
-        return response()->json(['status' => 'ok']);
-    }
-
     private function findOrCreateUser(string $email, string $name)
     {
         $user = User::where('email', $email)->first();
         $newUser = false;
 
-        if (!$user) {
+        if (! $user) {
             $user = User::forceCreate([
                 'name' => $name,
                 'email' => $email,

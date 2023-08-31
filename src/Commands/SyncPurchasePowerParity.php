@@ -40,6 +40,7 @@ class SyncPurchasePowerParity extends EdukaCommand
 
         if ($courseId === null) {
             $this->error('--course-id is required.');
+
             return 1;
         }
 
@@ -47,13 +48,15 @@ class SyncPurchasePowerParity extends EdukaCommand
 
         if (count($countryCodes) === 0) {
             $this->error('--countries is required. use * to sync for all countries.');
+
             return 1;
         }
 
         $course = Course::find($courseId);
 
-        if (!$course) {
-            $this->error('could not find course with id ' . $courseId);
+        if (! $course) {
+            $this->error('could not find course with id '.$courseId);
+
             return 1;
         }
 
@@ -76,8 +79,9 @@ class SyncPurchasePowerParity extends EdukaCommand
             $apiResponse = $api->requestFor($coupon->country_iso_code);
 
             if (is_null($apiResponse)) {
-                $this->error('could not get PPP data for ' . $coupon->country_iso_code);
-                $this->logError('could not get PPP data for ' . $coupon->country_iso_code,);
+                $this->error('could not get PPP data for '.$coupon->country_iso_code);
+                $this->logError('could not get PPP data for '.$coupon->country_iso_code);
+
                 return;
             }
 
@@ -89,17 +93,19 @@ class SyncPurchasePowerParity extends EdukaCommand
 
             if ($couponPercentage === $coupon->discount_amount) {
                 $this->logInfo(sprintf('coupon discount amount is %s and coupon percent should be %s. they match, skipping this one.', $coupon->discount_amount, $couponPercentage));
+
                 return;
             }
 
-            $couponApi = new LemonSqueezy(env('LEMON_SQUEEZY_API_KEY'));
+            $couponApi = new LemonSqueezy(env('LEMON_SQUEEZY_API_KEY', ''));
 
-            if($coupon->remote_reference_id !== null && $coupon->remote_reference_id !== 0) {
+            if ($coupon->remote_reference_id !== null && $coupon->remote_reference_id !== 0) {
                 // delete the coupon first
                 try {
                     $couponApi->deleteDiscount($coupon->remote_reference_id);
-                } catch(\Exception $e) {
+                } catch (\Exception $e) {
                     $this->logError('could not delete coupon.', $e);
+
                     return;
                 }
                 $this->logInfo(sprintf('coupon (remote ref id: %s) deleted successfully.', $coupon->remote_reference_id));
@@ -115,12 +121,13 @@ class SyncPurchasePowerParity extends EdukaCommand
                     $couponPercentage,
                     $isFlatDiscount,
                 );
-            } catch(\Exception $e) {
+            } catch (\Exception $e) {
                 $this->logError('could not create new coupon.', $e);
+
                 return;
             }
 
-            if($reference !== null) {
+            if ($reference !== null) {
                 $coupon->update([
                     'is_flat_discount' => $isFlatDiscount,
                     'remote_reference_id' => $reference,
@@ -139,7 +146,7 @@ class SyncPurchasePowerParity extends EdukaCommand
         Log::info($message, $data);
     }
 
-    private function logError(string $message, ?Exception $e = null, array $data = [])
+    private function logError(string $message, Exception $e = null, array $data = [])
     {
         if ($e) {
             $data[] = [

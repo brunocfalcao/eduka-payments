@@ -7,16 +7,17 @@ use GuzzleHttp\Psr7\Request;
 
 class LemonSqueezy
 {
-    public const GATEWAY_ID = "lemon_squeezy";
+    public const GATEWAY_ID = 'lemon_squeezy';
 
-    private string $baseUri = "https://api.lemonsqueezy.com/v1";
+    private const METHOD_POST = 'POST';
+
+    private const METHOD_DELETE = 'DELETE';
+
+    private string $baseUri = 'https://api.lemonsqueezy.com/v1';
 
     private array $data = [];
 
     private string $apiKey;
-
-    private const METHOD_POST = "POST";
-    private const METHOD_DELETE = "DELETE";
 
     public function __construct(string $apiKey)
     {
@@ -28,7 +29,111 @@ class LemonSqueezy
     {
         $this->data['type'] = 'checkouts';
 
-        return $this->post("checkouts");
+        return $this->post('checkouts');
+    }
+
+    public function createDiscount(string $code, float $amount, bool $isFixed)
+    {
+        $this->data['type'] = 'discounts';
+
+        $this->data['attributes'] = [
+            'name' => $code,
+            'code' => $code,
+            'amount' => $isFixed ? $amount * 100 : $amount,
+            'amount_type' => $isFixed ? 'fixed' : 'percent',
+        ];
+
+        return $this->post('discounts');
+    }
+
+    public function deleteDiscount(string $id)
+    {
+        return $this->delete('discounts/'.$id);
+    }
+
+    public function setCustomPrice($price)
+    {
+        $this->data['attributes']['custom_price'] = $price;
+
+        return $this;
+    }
+
+    public function disableProductVariants()
+    {
+        $this->data['attributes']['product_options']['enabled_variants'] = [];
+
+        return $this;
+    }
+
+    public function setRedirectUrl($url)
+    {
+        $this->data['attributes']['product_options']['redirect_url'] = $url;
+
+        return $this;
+    }
+
+    public function setButtonColor($color)
+    {
+        $this->data['checkout_options']['button_color'] = $color;
+
+        return $this;
+    }
+
+    public function setCustomData(array $customData)
+    {
+        $this->data['attributes']['checkout_data']['custom'] = $customData;
+
+        return $this;
+    }
+
+    public function setVariantId(string $id)
+    {
+        $this->data['relationships']['variant'] = [
+            'data' => [
+                'type' => 'variants',
+                'id' => $id,
+            ],
+        ];
+
+        return $this;
+    }
+
+    public function setStoreId(string $storeId)
+    {
+        $this->data['relationships']['store'] = [
+            'data' => [
+                'type' => 'stores',
+                'id' => $storeId,
+            ],
+        ];
+
+        return $this;
+    }
+
+    public function setCouponId(string $discountCode)
+    {
+        $this->data['checkout_options']['discount_code'] = $discountCode;
+
+        return $this;
+    }
+
+    public function setExpiresAt($dateTime)
+    {
+        $this->data['expires_at'] = $dateTime;
+
+        return $this;
+    }
+
+    public function setPreview($preview)
+    {
+        $this->data['preview'] = $preview;
+
+        return $this;
+    }
+
+    public function build()
+    {
+        return json_encode(['data' => $this->data]);
     }
 
     private function post(string $path)
@@ -41,35 +146,15 @@ class LemonSqueezy
         return $this->makeRequest($path, self::METHOD_DELETE);
     }
 
-
-    public function createDiscount(string $code, float $amount, bool $isFixed)
-    {
-        $this->data['type'] = 'discounts';
-
-        $this->data['attributes'] = [
-            "name" => $code,
-            "code" => $code,
-            "amount" => $isFixed ? $amount * 100 : $amount,
-            "amount_type" => $isFixed ? 'fixed' : 'percent'
-        ];
-
-        return $this->post("discounts");
-    }
-
-    public function deleteDiscount(string $id)
-    {
-        return $this->delete("discounts/" . $id);
-    }
-
     private function makeRequest(string $path, string $method)
     {
         $headers = [
             'Accept' => 'application/vnd.api+json',
             'Content-Type' => 'application/vnd.api+json',
-            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Authorization' => 'Bearer '.$this->apiKey,
         ];
 
-        $uri = sprintf("%s/%s", $this->baseUri, $path);
+        $uri = sprintf('%s/%s', $this->baseUri, $path);
 
         $data = $this->build();
 
@@ -82,82 +167,5 @@ class LemonSqueezy
         } catch (\Exception $e) {
             throw $e;
         }
-    }
-
-    public function setCustomPrice($price)
-    {
-        $this->data['attributes']['custom_price'] = $price;
-        return $this;
-    }
-
-    public function disableProductVariants()
-    {
-        $this->data['attributes']['product_options']['enabled_variants'] = [];
-        return $this;
-    }
-
-    public function setRedirectUrl($url)
-    {
-        $this->data['attributes']['product_options']['redirect_url'] = $url;
-        return $this;
-    }
-
-    public function setButtonColor($color)
-    {
-        $this->data['checkout_options']['button_color'] = $color;
-        return $this;
-    }
-
-    public function setCustomData(array $customData)
-    {
-        $this->data['attributes']['checkout_data']['custom'] = $customData;
-        return $this;
-    }
-
-    public function setVariantId(string $id)
-    {
-        $this->data['relationships']['variant'] = [
-            'data' => [
-                'type' => 'variants',
-                'id' => $id,
-            ]
-        ];
-
-        return $this;
-    }
-
-    public function setStoreId(string $storeId)
-    {
-        $this->data['relationships']['store'] = [
-            'data' => [
-                'type' => 'stores',
-                'id' => $storeId,
-            ]
-        ];
-
-        return $this;
-    }
-
-    public function setCouponId(string $discountCode)
-    {
-        $this->data['checkout_options']['discount_code'] = $discountCode;
-        return $this;
-    }
-
-    public function setExpiresAt($dateTime)
-    {
-        $this->data['expires_at'] = $dateTime;
-        return $this;
-    }
-
-    public function setPreview($preview)
-    {
-        $this->data['preview'] = $preview;
-        return $this;
-    }
-
-    public function build()
-    {
-        return json_encode(['data' => $this->data]);
     }
 }

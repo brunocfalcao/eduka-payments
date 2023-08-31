@@ -3,7 +3,7 @@
 namespace Eduka\Payments\Actions;
 
 use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
-use \Exception;
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 class LemonSqueezyCoupon
@@ -19,6 +19,7 @@ class LemonSqueezyCoupon
 
             if (isset($res['errors'])) {
                 $this->log($res['errors'][0]['detail'], null, $res['errors']);
+
                 return false;
             }
 
@@ -28,7 +29,7 @@ class LemonSqueezyCoupon
 
             return false;
         } catch (Exception $e) {
-            $this->log("could not create coupon in lemonsquzzy", $e);
+            $this->log('could not create coupon in lemonsquzzy', $e);
 
             return false;
         }
