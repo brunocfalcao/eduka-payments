@@ -16,10 +16,8 @@ use Eduka\Payments\Events\CallbackFromPaymentGateway;
 use Eduka\Payments\Events\RedirectAwayToPaymentGateway;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\Responses\CreatedCheckoutResponse;
-use Eduka\Payments\Notifications\{
-    WelcomeNewUserToCourseNotification,
-    WelcomeExistingUserToCourseNotification
-};
+use Eduka\Payments\Notifications\WelcomeNewUserToCourseNotification;
+use Eduka\Payments\Notifications\WelcomeExistingUserToCourseNotification;
 use Exception;
 use Illuminate\Http\Request as HttpRequest;
 use Hibit\Country\CountryRecord;
@@ -35,7 +33,7 @@ class PaymentController extends Controller
 
     public function __construct(Cerebrus $session)
     {
-        $this->lemonSqueezyApiKey = env('LEMON_SQUEEZY_API_KEY');
+        $this->lemonSqueezyApiKey = env('LEMON_SQUEEZY_API_KEY', '');
         $this->session = $session;
         $this->course = $this->session->get(NereusServiceProvider::COURSE_SESSION_KEY);
     }
@@ -147,7 +145,7 @@ class PaymentController extends Controller
         $courseId = $json['meta']['custom_data']['course_id'];
         $course = Course::find($courseId);
 
-        if(! $course) {
+        if (! $course) {
             Log::error('could not find course with id ' . $courseId);
             return response()->json(['status' => 'ok']);
         }
