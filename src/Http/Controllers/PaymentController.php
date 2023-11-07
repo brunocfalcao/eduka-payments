@@ -11,6 +11,7 @@ use Eduka\Cube\Models\Order;
 use Eduka\Cube\Models\User;
 use Eduka\Nereus\NereusServiceProvider;
 use Eduka\Payments\Actions\LemonSqueezyCoupon;
+use Eduka\Payments\Actions\LemonSqueezyWebhookPayloadExtractor;
 use Eduka\Payments\Actions\UserCountryFromIP;
 use Eduka\Payments\Events\CallbackFromPaymentGateway;
 use Eduka\Payments\Events\RedirectAwayToPaymentGateway;
@@ -20,6 +21,7 @@ use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\Responses\CreatedCheckoutResponse;
 use Exception;
 use Hibit\Country\CountryRecord;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -31,7 +33,7 @@ class PaymentController extends Controller
 
     private string $lemonSqueezyApiKey;
 
-    private Course $course;
+    private Course|null $course;
 
     public function __construct(Cerebrus $session)
     {
@@ -40,7 +42,10 @@ class PaymentController extends Controller
         $this->course = $this->session->get(NereusServiceProvider::COURSE_SESSION_KEY);
     }
 
-    public function redirectToCheckoutPage(HttpRequest $request)
+    /**
+     * @throws Exception
+     */
+    public function redirectToCheckoutPage(HttpRequest $request): RedirectResponse
     {
         if (! $this->course) {
             return redirect()->back();
@@ -89,12 +94,13 @@ class PaymentController extends Controller
         [$user, $newUser] = $this->findOrCreateUser($userEmail, $json['data']['attributes']['user_name']);
 
         // save everything in the response
-        $order = Order::create([
+        $extracted = (new LemonSqueezyWebhookPayloadExtractor)->extract($json);
+
+        $order = Order::create(array_merge($extracted, [
             'user_id' => $user->id,
             'course_id' => $course->id,
             'response_body' => json_encode($json),
-            // @todo add more column
-        ]);
+        ]));
 
         $user->notify(
             $newUser ?
@@ -108,10 +114,13 @@ class PaymentController extends Controller
         return response()->json(['status' => 'ok']);
     }
 
-    private function createCheckout(LemonSqueezy $paymentsApi, Course $course, string $nonceKey, string $trackingID)
+    /**
+     * @throws Exception
+     */
+    private function createCheckout(LemonSqueezy $paymentsApi, Course $course, string $nonceKey, string $trackingID): array
     {
         try {
-            return $paymentsApi
+            $responseString = $paymentsApi
                 ->setRedirectUrl(route('purchase.callback', $nonceKey))
                 ->setExpiresAt(now()->addHours(2)->toString())
                 ->setCustomData([
@@ -122,23 +131,32 @@ class PaymentController extends Controller
                 ->setStoreId($course->paymentProviderStoreId())
                 ->setVariantId($course->paymentProviderProductId())
                 ->createCheckout();
+
+            $raw = json_decode($responseString, true);
+
+            if (isset($raw['errors'])) {
+                throw new Exception(reset($raw['errors'][0]));
+            }
+
+            return $raw;
+
         } catch (\Exception $e) {
             $this->log('could not create checkout', $e);
             throw $e;
         }
     }
 
-    private function ensureCouponOnLemonSqueezy(CountryRecord $country, int $courseId)
+    private function ensureCouponOnLemonSqueezy(CountryRecord $country, int $courseId): void
     {
         $coupon = FindCoupon::fromCountryRecord(strtoupper($country->getIsoCode()), $courseId);
-        // coupon does not exists in database
+        // coupon does not exist in database
         if (! $coupon) {
-            return false;
+            return;
         }
 
         // check if coupon has remote reference id, if yes, it means coupon also exists in lemon squeezy
         if ($coupon->hasRemoteReference()) {
-            return true;
+            return;
         }
 
         // reaching here means coupon exists in database, but not on lemon squeezy.
@@ -157,7 +175,7 @@ class PaymentController extends Controller
 
         if (! $reference) {
             // could not create coupon in lemon squezzy
-            return false;
+            return;
         }
 
         // coupon created, update $coupon in local db

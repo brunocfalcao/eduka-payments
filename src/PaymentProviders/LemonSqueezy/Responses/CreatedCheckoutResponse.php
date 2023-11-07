@@ -4,11 +4,8 @@ namespace Eduka\Payments\PaymentProviders\LemonSqueezy\Responses;
 
 class CreatedCheckoutResponse
 {
-    private array $raw;
-
-    public function __construct(string $responseString)
+    public function __construct(private array $raw)
     {
-        $this->raw = json_decode($responseString, true);
     }
 
     public function data()
