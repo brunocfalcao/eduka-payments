@@ -33,7 +33,7 @@ class PaymentController extends Controller
 
     private string $lemonSqueezyApiKey;
 
-    private Course|null $course;
+    private ?Course $course;
 
     public function __construct(Cerebrus $session)
     {
