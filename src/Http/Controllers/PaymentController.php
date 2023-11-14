@@ -9,6 +9,7 @@ use Eduka\Cube\Models\Coupon;
 use Eduka\Cube\Models\Course;
 use Eduka\Cube\Models\Order;
 use Eduka\Cube\Models\User;
+use Eduka\Nereus\Facades\Nereus;
 use Eduka\Nereus\NereusServiceProvider;
 use Eduka\Payments\Actions\LemonSqueezyCoupon;
 use Eduka\Payments\Actions\LemonSqueezyWebhookPayloadExtractor;
@@ -29,22 +30,19 @@ use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
-    private Cerebrus $session;
-
     private string $lemonSqueezyApiKey;
 
-    private ?Course $course;
+    private Course $course;
 
-    public function __construct(Cerebrus $session)
+    private Cerebrus $session;
+
+    public function __construct()
     {
+        $this->session = new Cerebrus();
         $this->lemonSqueezyApiKey = env('LEMON_SQUEEZY_API_KEY', '');
-        $this->session = $session;
-        $this->course = $this->session->get(NereusServiceProvider::COURSE_SESSION_KEY);
+        $this->course = Nereus::course();
     }
 
-    /**
-     * @throws Exception
-     */
     public function redirectToCheckoutPage(HttpRequest $request): RedirectResponse
     {
         if (! $this->course) {
@@ -129,7 +127,7 @@ class PaymentController extends Controller
                 ])
                 ->setCustomPrice($course->priceInCents())
                 ->setStoreId($course->paymentProviderStoreId())
-                ->setVariantId($course->paymentProviderProductId())
+                ->setVariantId($course->paymentProviderVariantId())
                 ->createCheckout();
 
             $raw = json_decode($responseString, true);
@@ -139,7 +137,6 @@ class PaymentController extends Controller
             }
 
             return $raw;
-
         } catch (\Exception $e) {
             $this->log('could not create checkout', $e);
             throw $e;
