@@ -37,11 +37,12 @@ class PaymentController extends Controller
     {
         $this->session = new Cerebrus();
         $this->lemonSqueezyApiKey = env('LEMON_SQUEEZY_API_KEY', '');
-        $this->course = Nereus::course();
     }
 
     public function redirectToCheckoutPage(HttpRequest $request): RedirectResponse
     {
+        $this->course = Nereus::course();
+
         if (! $this->course) {
             return redirect()->back();
         }
