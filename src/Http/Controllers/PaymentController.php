@@ -48,7 +48,9 @@ class PaymentController extends Controller
             return redirect()->back();
         }
 
-        dd(request()->headers);
+        if (array_key_exists('cf-ipcountry', request()->headers)) {
+            dd(request()->headers['cf-ipcountry']);
+        };
 
         $userCountry = json_decode(file_get_contents('https://api.country.is/'.request()->public_ip()));
 
