@@ -48,11 +48,17 @@ class PaymentController extends Controller
             return redirect()->back();
         }
 
+        /**
+         * @aryan: So, it's working now, you can take it from here.
+         * The userCountry will have CH, PT, DE code, and it can be
+         * matched on the country tables I hope. It uses this
+         * nomenclature: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+         * You might need to import the countries on that format to
+         * have 100% match.
+         */
         if (request()->header('cf-ipcountry')) {
             $userCountry = request()->header('cf-ipcountry');
         };
-
-        dd($userCountry);
 
         // if ($userCountry) {
         //     $this->ensureCouponOnLemonSqueezy($userCountry);
@@ -145,6 +151,28 @@ class PaymentController extends Controller
         }
     }
 
+    /**
+     * @aryan:
+     * So, the logic should be:
+     * 1. Visitor visits website.
+     * 2. You grab the country header (already on the codebase).
+     * 3. You check if you have the coupon created on our local
+     *    coupons table. If not:
+     *    3.1. You create a global coupon on the lemonsqueezy,
+     *         but please trigger an async job queue=default
+     *         because I don't the website to slow down because
+     *         of that api request (can take sometime I guess).
+     *    3.2. You add the coupon to our eduka database. No need
+     *         to have a "per course" logic, because these are
+     *         global product-wide coupons. You check the PPP.
+     * 4. You always show on the website the coupon in case
+     *    the courses.enable_purchase_power_parity = true. If
+     *    false, we don't show the coupon (although, if they
+     *    know how to use it, they can use it surely).
+     *
+     * At the end, you just add coupons as long as new visitors
+     * countries are arriving. We don't create them all at once.
+     */
     private function ensureCouponOnLemonSqueezy(string $country): void
     {
         $coupon = FindCoupon::fromCountryRecord($country, Nereus::course()->id);
