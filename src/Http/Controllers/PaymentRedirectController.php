@@ -4,35 +4,39 @@ namespace Eduka\Payments\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Brunocfalcao\Cerebrus\Cerebrus;
-use Eduka\Nereus\NereusServiceProvider;
+use Eduka\Nereus\Facades\Nereus;
 
 class PaymentRedirectController extends Controller
 {
+    public const THANK_YOU_OK = 'thank-you-ok';
+    public const THANK_YOU_ERROR_NO_COURSE = 'thank-you-error-no-course';
+    public const THANK_YOU_ERROR_NO_NONCE = 'thank-you-error-no-nonce';
+
     private Cerebrus $session;
 
-    public function __construct(Cerebrus $session)
+    public function __construct()
     {
-        $this->session = $session;
+        $this->session = new Cerebrus();
     }
 
-    public function index(string $nonce)
+    public function thanksForBuying(string $nonce)
     {
-        $course = $this->session->get(NereusServiceProvider::COURSE_SESSION_KEY);
+        $course = Nereus::course();
+
         if (! $course) {
-            return redirect('/');
+            return view('course::thanks-for-buying')
+                ->with(['message' => self::THANK_YOU_ERROR_NO_COURSE]);
         }
 
-        if (! $this->session->has(NereusServiceProvider::NONCE_KEY)) {
-            return redirect()->route('welcome.default');
+        if (! $this->session->has('eduka:nereus:nonce')) {
+            return view('course::thanks-for-buying')
+                ->with(['message' => self::THANK_YOU_ERROR_NO_NONCE]);
         }
 
-        if ($this->session->get(NereusServiceProvider::NONCE_KEY) !== $nonce) {
-            return redirect()->route('welcome.default');
-        }
+        $this->session->unset('eduka:nereus:nonce');
+        $this->session->unset('eduka:nereus:nonce');
 
-        $this->session->unset(NereusServiceProvider::NONCE_KEY);
-
-        return view('course::congratulations')
+        return view('course::thanks-for-buying')
             ->with(['course' => $course]);
     }
 }

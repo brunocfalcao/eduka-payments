@@ -10,7 +10,6 @@ use Eduka\Cube\Models\Course;
 use Eduka\Cube\Models\Order;
 use Eduka\Cube\Models\User;
 use Eduka\Nereus\Facades\Nereus;
-use Eduka\Nereus\NereusServiceProvider;
 use Eduka\Payments\Actions\LemonSqueezyCoupon;
 use Eduka\Payments\Actions\LemonSqueezyWebhookPayloadExtractor;
 use Eduka\Payments\Actions\UserCountryFromIP;
@@ -61,11 +60,15 @@ class PaymentController extends Controller
         $nonceKey = Str::random();
         $trackingID = Str::random(10);
 
+        $this->session->set('eduka:nereus:nonce', $nonceKey);
+
+        return redirect()->away(
+            route('purchase.callback', ['nonce' => $nonceKey])
+        );
+
         $checkoutResponse = $this->createCheckout($paymentsApi, $this->course, $nonceKey, $trackingID);
 
         $checkoutUrl = (new CreatedCheckoutResponse($checkoutResponse))->checkoutUrl();
-
-        $this->session->set(NereusServiceProvider::NONCE_KEY, $nonceKey);
 
         event(new RedirectAwayToPaymentGateway($trackingID, LemonSqueezy::GATEWAY_ID));
 
@@ -117,6 +120,7 @@ class PaymentController extends Controller
      */
     private function createCheckout(LemonSqueezy $paymentsApi, Course $course, string $nonceKey, string $trackingID): array
     {
+        dd(route('purchase.callback', $nonceKey));
         try {
             $responseString = $paymentsApi
                 ->setRedirectUrl(route('purchase.callback', $nonceKey))
