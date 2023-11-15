@@ -12,7 +12,6 @@ use Eduka\Cube\Models\User;
 use Eduka\Nereus\Facades\Nereus;
 use Eduka\Payments\Actions\LemonSqueezyCoupon;
 use Eduka\Payments\Actions\LemonSqueezyWebhookPayloadExtractor;
-use Eduka\Payments\Actions\UserCountryFromIP;
 use Eduka\Payments\Events\CallbackFromPaymentGateway;
 use Eduka\Payments\Events\RedirectAwayToPaymentGateway;
 use Eduka\Payments\Notifications\WelcomeExistingUserToCourseNotification;
@@ -20,7 +19,6 @@ use Eduka\Payments\Notifications\WelcomeNewUserToCourseNotification;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\Responses\CreatedCheckoutResponse;
 use Exception;
-use Hibit\Country\CountryRecord;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Hash;
@@ -58,11 +56,7 @@ class PaymentController extends Controller
          */
         if (request()->header('cf-ipcountry')) {
             $userCountry = request()->header('cf-ipcountry');
-        };
-
-        // if ($userCountry) {
-        //     $this->ensureCouponOnLemonSqueezy($userCountry);
-        // }
+        }
 
         $paymentsApi = new LemonSqueezy($this->lemonSqueezyApiKey);
 
@@ -105,14 +99,16 @@ class PaymentController extends Controller
         $order = Order::create(array_merge($extracted, [
             'user_id' => $user->id,
             'course_id' => $course->id,
-            'response_body' => json_encode($json),
+            'response_body' => $json,
         ]));
 
+        /*
         $user->notify(
             $newUser ?
                 new WelcomeNewUserToCourseNotification($course->name) :
                 new WelcomeExistingUserToCourseNotification($course->name)
         );
+        */
 
         // attach user to course
         $course->users()->sync([$user->id]);
