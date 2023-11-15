@@ -48,15 +48,15 @@ class PaymentController extends Controller
             return redirect()->back();
         }
 
-        if (array_key_exists('cf-ipcountry', request()->headers)) {
-            dd(request()->headers['cf-ipcountry']);
+        if (request()->header('cf-ipcountry')) {
+            $userCountry = request()->header('cf-ipcountry');
         };
 
-        $userCountry = json_decode(file_get_contents('https://api.country.is/'.request()->public_ip()));
+        dd($userCountry);
 
-        if ($userCountry?->country) {
-            $this->ensureCouponOnLemonSqueezy($userCountry->country);
-        }
+        // if ($userCountry) {
+        //     $this->ensureCouponOnLemonSqueezy($userCountry);
+        // }
 
         $paymentsApi = new LemonSqueezy($this->lemonSqueezyApiKey);
 
