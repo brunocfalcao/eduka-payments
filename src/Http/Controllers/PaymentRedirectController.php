@@ -9,7 +9,9 @@ use Eduka\Nereus\Facades\Nereus;
 class PaymentRedirectController extends Controller
 {
     public const THANK_YOU_OK = 'thank-you-ok';
+
     public const THANK_YOU_ERROR_NO_COURSE = 'thank-you-error-no-course';
+
     public const THANK_YOU_ERROR_NO_NONCE = 'thank-you-error-no-nonce';
 
     private Cerebrus $session;

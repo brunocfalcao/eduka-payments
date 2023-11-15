@@ -48,11 +48,12 @@ class PaymentController extends Controller
             return redirect()->back();
         }
 
-        // @todo refactor
-        $userCountry = UserCountryFromIP::get($request);
+        dd(request()->headers);
 
-        if ($userCountry) {
-            $this->ensureCouponOnLemonSqueezy($userCountry, $this->course->id);
+        $userCountry = json_decode(file_get_contents('https://api.country.is/'.request()->public_ip()));
+
+        if ($userCountry?->country) {
+            $this->ensureCouponOnLemonSqueezy($userCountry->country);
         }
 
         $paymentsApi = new LemonSqueezy($this->lemonSqueezyApiKey);
@@ -62,17 +63,13 @@ class PaymentController extends Controller
 
         $this->session->set('eduka:nereus:nonce', $nonceKey);
 
-        return redirect()->away(
-            route('purchase.callback', ['nonce' => $nonceKey])
-        );
-
         $checkoutResponse = $this->createCheckout($paymentsApi, $this->course, $nonceKey, $trackingID);
 
         $checkoutUrl = (new CreatedCheckoutResponse($checkoutResponse))->checkoutUrl();
 
         event(new RedirectAwayToPaymentGateway($trackingID, LemonSqueezy::GATEWAY_ID));
 
-        return redirect()->away($checkoutUrl.'&aff=1234');
+        return redirect()->away($checkoutUrl);
     }
 
     public function handleWebhook(HttpRequest $request)
@@ -120,7 +117,6 @@ class PaymentController extends Controller
      */
     private function createCheckout(LemonSqueezy $paymentsApi, Course $course, string $nonceKey, string $trackingID): array
     {
-        dd(route('purchase.callback', $nonceKey));
         try {
             $responseString = $paymentsApi
                 ->setRedirectUrl(route('purchase.callback', $nonceKey))
@@ -147,9 +143,10 @@ class PaymentController extends Controller
         }
     }
 
-    private function ensureCouponOnLemonSqueezy(CountryRecord $country, int $courseId): void
+    private function ensureCouponOnLemonSqueezy(string $country): void
     {
-        $coupon = FindCoupon::fromCountryRecord(strtoupper($country->getIsoCode()), $courseId);
+        $coupon = FindCoupon::fromCountryRecord($country, Nereus::course()->id);
+
         // coupon does not exist in database
         if (! $coupon) {
             return;
