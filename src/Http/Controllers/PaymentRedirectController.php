@@ -25,15 +25,14 @@ class PaymentRedirectController extends Controller
 
         if (! $course) {
             return view('course::thanks-for-buying')
-                ->with(['message' => self::THANK_YOU_ERROR_NO_COURSE]);
+                   ->with(['message' => self::THANK_YOU_ERROR_NO_COURSE]);
         }
 
         if (! $this->session->has('eduka:nereus:nonce')) {
             return view('course::thanks-for-buying')
-                ->with(['message' => self::THANK_YOU_ERROR_NO_NONCE]);
+                   ->with(['message' => self::THANK_YOU_ERROR_NO_NONCE]);
         }
 
-        $this->session->unset('eduka:nereus:nonce');
         $this->session->unset('eduka:nereus:nonce');
 
         return view('course::thanks-for-buying')
