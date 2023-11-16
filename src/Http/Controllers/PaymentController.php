@@ -66,6 +66,27 @@ class PaymentController extends Controller
 
         $this->session->set('eduka:nereus:nonce', $nonceKey);
 
+        /**
+         * @bruno:
+         * Logic should be a bit different. We need to receive a new variant
+         * id from the course webpage (we can have like 2 offers from the
+         * same course, early-access and full course) with different
+         * pricing models. Changes:
+         * - The webpage should return the variant ID, in case we would
+         *   like to specify the variant directly.
+         * - There should be a variants table/eloquent model.
+         * - The product price can be removed from the db. I'll use
+         *   directly the one from the product itself. Then apply
+         *   specific coupons if needed. Or, if we don't have a specific
+         *   variant price, then it would retrieve the one from LemonS.
+         * - There should be a relationship between courses, and
+         *   variants. Even if a visitor buys a variant, at the end it
+         *   will be part of a course.
+         *   In case a course only has one variant, then the landing
+         *   page doesn't need to pass the variant itself, or if there
+         *   are several variants, then eduka should pick the one that
+         *   is marked as default.
+         */
         $checkoutResponse = $this->createCheckout($paymentsApi, $this->course, $nonceKey, $trackingID);
 
         $checkoutUrl = (new CreatedCheckoutResponse($checkoutResponse))->checkoutUrl();
@@ -77,6 +98,18 @@ class PaymentController extends Controller
 
     public function handleWebhook(HttpRequest $request)
     {
+        /**
+         * @aryan:
+         * We need to validate the request. Check:
+         * https://docs.lemonsqueezy.com/help/webhooks
+         * on the chapter "Signing requests".
+         *
+         * @aryan:
+         * The logic of the refund should also be implemented.
+         * In case it's a refund, it should send a notification to the
+         * user with the refund information automatically.
+         */
+
         $json = $request->all();
         event(new CallbackFromPaymentGateway($json['meta']['custom_data']['tracking_id'], LemonSqueezy::GATEWAY_ID));
 
