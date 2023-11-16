@@ -9,6 +9,7 @@ use Eduka\Cube\Models\Coupon;
 use Eduka\Cube\Models\Course;
 use Eduka\Cube\Models\Order;
 use Eduka\Cube\Models\User;
+use Eduka\Cube\Models\Variant;
 use Eduka\Nereus\Facades\Nereus;
 use Eduka\Payments\Actions\LemonSqueezyCoupon;
 use Eduka\Payments\Actions\LemonSqueezyWebhookPayloadExtractor;
@@ -31,6 +32,8 @@ class PaymentController extends Controller
 
     private Course $course;
 
+    private Variant $variant;
+
     private Cerebrus $session;
 
     public function __construct()
@@ -46,6 +49,10 @@ class PaymentController extends Controller
         if (! $this->course) {
             return redirect()->back();
         }
+
+        $this->variant = $this->course->getVariantOrDefault(
+            $request->input('variant')
+        );
 
         /**
          * @aryan: So, it's working now, you can take it from here.
@@ -87,7 +94,7 @@ class PaymentController extends Controller
          *   are several variants, then eduka should pick the one that
          *   is marked as default.
          */
-        $checkoutResponse = $this->createCheckout($paymentsApi, $this->course, $nonceKey, $trackingID);
+        $checkoutResponse = $this->createCheckout($paymentsApi, $this->variant, $nonceKey, $trackingID);
 
         $checkoutUrl = (new CreatedCheckoutResponse($checkoutResponse))->checkoutUrl();
 
@@ -109,12 +116,12 @@ class PaymentController extends Controller
          * In case it's a refund, it should send a notification to the
          * user with the refund information automatically.
          */
-
         $json = $request->all();
         event(new CallbackFromPaymentGateway($json['meta']['custom_data']['tracking_id'], LemonSqueezy::GATEWAY_ID));
 
-        $courseId = $json['meta']['custom_data']['course_id'];
-        $course = Course::find($courseId);
+        $variantUuid = $json['meta']['custom_data']['course_variant_uuid'];
+        $variant = Variant::firstWhere('uuid', $variantUuid);
+        $course = Variant::firstWhere('uuid', $variantUuid)->course;
 
         if (! $course) {
             Log::error('could not find course with id '.$courseId);
@@ -133,6 +140,7 @@ class PaymentController extends Controller
         $order = Order::create(array_merge($extracted, [
             'user_id' => $user->id,
             'course_id' => $course->id,
+            'variant_id' => $variant->id,
             'response_body' => $json,
         ]));
 
@@ -153,19 +161,28 @@ class PaymentController extends Controller
     /**
      * @throws Exception
      */
-    private function createCheckout(LemonSqueezy $paymentsApi, Course $course, string $nonceKey, string $trackingID): array
+    private function createCheckout(LemonSqueezy $paymentsApi, Variant $variant, string $nonceKey, string $trackingID): array
     {
         try {
             $responseString = $paymentsApi
-                ->setRedirectUrl(route('purchase.callback', $nonceKey))
-                ->setExpiresAt(now()->addHours(2)->toString())
-                ->setCustomData([
-                    'course_id' => (string) $course->id,
-                    'tracking_id' => $trackingID,
-                ])
-                ->setCustomPrice($course->priceInCents())
-                ->setStoreId($course->paymentProviderStoreId())
-                ->setVariantId($course->paymentProviderVariantId())
+            ->setRedirectUrl(route('purchase.callback', $nonceKey))
+            ->setExpiresAt(now()->addHours(2)->toString())
+            ->setCustomData([
+            'course_variant_uuid' => $variant->uuid,
+            'tracking_id' => $trackingID,
+            ]);
+
+            // Conditionally applying setCustomPrice
+            if ($variant->priceOverrideInCents()) {
+                $responseString = $responseString
+                                    ->setCustomPrice(
+                                        $variant->priceOverrideInCents()
+                                    );
+            }
+
+            $responseString = $responseString
+                ->setStoreId($variant->course->paymentProviderStoreId())
+                ->setVariantId($variant->lemonsqueezy_variant_id)
                 ->createCheckout();
 
             $raw = json_decode($responseString, true);
