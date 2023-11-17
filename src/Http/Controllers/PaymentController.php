@@ -46,7 +46,7 @@ class PaymentController extends Controller
     {
         $this->course = Nereus::course();
 
-        if (!$this->course) {
+        if (! $this->course) {
             return redirect()->back();
         }
 
@@ -123,8 +123,8 @@ class PaymentController extends Controller
         $variant = Variant::firstWhere('uuid', $variantUuid);
         $course = Variant::firstWhere('uuid', $variantUuid)->course;
 
-        if (!$course) {
-            Log::error('could not find course for variant id ' . $variantUuid);
+        if (! $course) {
+            Log::error('could not find course for variant id '.$variantUuid);
 
             return response()->json(['status' => 'ok']);
         }
@@ -225,7 +225,7 @@ class PaymentController extends Controller
         $coupon = FindCoupon::fromCountryRecord($country, Nereus::course()->id);
 
         // coupon does not exist in database
-        if (!$coupon) {
+        if (! $coupon) {
             return;
         }
 
@@ -248,7 +248,7 @@ class PaymentController extends Controller
             $coupon->is_flat_discount,
         );
 
-        if (!$reference) {
+        if (! $reference) {
             // could not create coupon in lemon squezzy
             return;
         }
@@ -276,7 +276,7 @@ class PaymentController extends Controller
         $user = User::where('email', $email)->first();
         $newUser = false;
 
-        if (!$user) {
+        if (! $user) {
             $user = User::forceCreate([
                 'name' => $name,
                 'email' => $email,
