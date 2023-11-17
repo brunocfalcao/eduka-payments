@@ -163,8 +163,6 @@ class PaymentController extends Controller
      */
     private function createCheckout(LemonSqueezy $paymentsApi, Variant $variant, string $nonceKey, string $trackingID): array
     {
-
-        dd($variant->lemonsqueezy_variant_id);
         try {
             $responseString = $paymentsApi
                 ->setRedirectUrl(route('purchase.callback', $nonceKey))
