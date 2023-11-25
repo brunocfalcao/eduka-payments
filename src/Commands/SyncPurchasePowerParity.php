@@ -47,7 +47,7 @@ class SyncPurchasePowerParity extends EdukaCommand
         $countryCodes = $this->option('countries');
 
         if (count($countryCodes) === 0) {
-            $this->error('--countries is required. use * to sync for all countries.');
+            $this->error("--countries is required. use '--countries=*' to sync for all countries.");
 
             return 1;
         }
