@@ -182,7 +182,7 @@ class PaymentController extends Controller
 
             $responseString = $responseString
                 ->setStoreId($variant->course->paymentProviderStoreId())
-                ->setVariantId($variant->lemonsqueezy_variant_id)
+                ->setVariantId($variant->lemon_squeezy_variant_id)
                 ->createCheckout();
 
             $raw = json_decode($responseString, true);
