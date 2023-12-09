@@ -7,7 +7,7 @@ use GuzzleHttp\Psr7\Request;
 
 class LemonSqueezy
 {
-    public const GATEWAY_ID = 'lemon_squeezy';
+    public const GATEWAY_ID = 'lemonsqueezy';
 
     private const METHOD_POST = 'POST';
 

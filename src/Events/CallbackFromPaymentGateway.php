@@ -11,23 +11,10 @@ class CallbackFromPaymentGateway
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     */
-    public function __construct(public string $trackingId, public string $paymentGatewayId)
-    {
-        //
-    }
+    public $payload;
 
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
-     */
-    public function broadcastOn(): array
+    public function __construct(array $payload)
     {
-        return [
-            new PrivateChannel('channel-name'),
-        ];
+        $this->payload = $payload;
     }
 }

@@ -39,7 +39,7 @@ class PaymentController extends Controller
     public function __construct()
     {
         $this->session = new Cerebrus();
-        $this->lemonSqueezyApiKey = env('LEMON_SQUEEZY_API_KEY', '');
+        $this->lemonSqueezyApiKey = env('LEMONSQUEEZY_API_KEY', '');
     }
 
     public function redirectToCheckoutPage(HttpRequest $request): RedirectResponse
@@ -116,46 +116,20 @@ class PaymentController extends Controller
          * In case it's a refund, it should send a notification to the
          * user with the refund information automatically.
          */
-        $json = $request->all();
-        event(new CallbackFromPaymentGateway($json['meta']['custom_data']['tracking_id'], LemonSqueezy::GATEWAY_ID));
+        $payload = $request->all();
 
-        $variantUuid = $json['meta']['custom_data']['course_variant_uuid'];
-        $variant = Variant::firstWhere('uuid', $variantUuid);
-        $course = Variant::firstWhere('uuid', $variantUuid)->course;
+        // Verify what webhook transation type it is.
+        switch ($payload['meta']['event_name']) {
+            case 'order_created':
+                event(new CallbackFromPaymentGateway($payload));
+                break;
 
-        if (! $course) {
-            Log::error('could not find course for variant id '.$variantUuid);
-
-            return response()->json(['status' => 'ok']);
+            case 'order_refunded':
+                break;
         }
 
-        // check if user exists or not
-        $userEmail = $json['data']['attributes']['user_email'];
-
-        [$user, $newUser] = $this->findOrCreateUser($userEmail, $json['data']['attributes']['user_name']);
-
-        // save everything in the response
-        $extracted = (new LemonSqueezyWebhookPayloadExtractor)->extract($json);
-
-        $order = Order::create(array_merge($extracted, [
-            'user_id' => $user->id,
-            'course_id' => $course->id,
-            'variant_id' => $variant->id,
-            'response_body' => $json,
-        ]));
-
-        /*
-        $user->notify(
-            $newUser ?
-                new WelcomeNewUserToCourseNotification($course->name) :
-                new WelcomeExistingUserToCourseNotification($course->name)
-        );
-        */
-
-        // attach user to course
-        $course->users()->sync([$user->id]);
-
-        return response()->json(['status' => 'ok']);
+        // Always return 200, no matter. Exception caught inside eduka.
+        return response()->json(['status' => 'ok'], 200);
     }
 
     /**
@@ -182,7 +156,7 @@ class PaymentController extends Controller
 
             $responseString = $responseString
                 ->setStoreId($variant->course->paymentProviderStoreId())
-                ->setVariantId($variant->lemon_squeezy_variant_id)
+                ->setVariantId($variant->lemonsqueezy_variant_id)
                 ->createCheckout();
 
             $raw = json_decode($responseString, true);
