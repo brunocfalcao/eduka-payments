@@ -146,7 +146,7 @@ class SyncPurchasePowerParity extends EdukaCommand
         Log::info($message, $data);
     }
 
-    private function logError(string $message, Exception $e = null, array $data = [])
+    private function logError(string $message, ?Exception $e = null, array $data = [])
     {
         if ($e) {
             $data[] = [

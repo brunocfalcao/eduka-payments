@@ -7,16 +7,12 @@ use Brunocfalcao\Cerebrus\Cerebrus;
 use Eduka\Cube\Actions\Coupon\FindCoupon;
 use Eduka\Cube\Models\Coupon;
 use Eduka\Cube\Models\Course;
-use Eduka\Cube\Models\Order;
 use Eduka\Cube\Models\User;
 use Eduka\Cube\Models\Variant;
 use Eduka\Nereus\Facades\Nereus;
 use Eduka\Payments\Actions\LemonSqueezyCoupon;
-use Eduka\Payments\Actions\LemonSqueezyWebhookPayloadExtractor;
 use Eduka\Payments\Events\CallbackFromPaymentGateway;
 use Eduka\Payments\Events\RedirectAwayToPaymentGateway;
-use Eduka\Payments\Notifications\WelcomeExistingUserToCourseNotification;
-use Eduka\Payments\Notifications\WelcomeNewUserToCourseNotification;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\Responses\CreatedCheckoutResponse;
 use Exception;
@@ -121,7 +117,12 @@ class PaymentController extends Controller
         // Verify what webhook transation type it is.
         switch ($payload['meta']['event_name']) {
             case 'order_created':
-                event(new CallbackFromPaymentGateway($payload));
+                try {
+                    event(new CallbackFromPaymentGateway($payload));
+                } catch (\Exception $ex) {
+                    return response()->json(['message' => $ex->getMessage()], 500);
+                }
+
                 break;
 
             case 'order_refunded':
