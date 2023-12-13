@@ -141,12 +141,12 @@ class SyncPurchasePowerParity extends EdukaCommand
         return 0;
     }
 
-    private function logInfo(string $message, array $data = [])
+    protected function logInfo(string $message, array $data = [])
     {
         Log::info($message, $data);
     }
 
-    private function logError(string $message, ?Exception $e = null, array $data = [])
+    protected function logError(string $message, ?Exception $e = null, array $data = [])
     {
         if ($e) {
             $data[] = [

@@ -10,6 +10,7 @@ class LemonSqueezyWebhookPayloadExtractor
         $attributes = $data['attributes'];
 
         return [
+            'lemon_squeezy_variant_id' => $attributes['first_order_item']['variant_id'],
             'remote_reference_order_id' => $data['id'],
             'remote_reference_customer_id' => $attributes['customer_id'],
             'remote_reference_order_attribute_id' => $attributes['identifier'],

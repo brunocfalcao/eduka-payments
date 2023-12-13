@@ -35,7 +35,7 @@ class LemonSqueezyCoupon
         }
     }
 
-    private function log(string $message, ?Exception $e, array $data = [])
+    protected function log(string $message, ?Exception $e, array $data = [])
     {
         if ($e) {
             $data[] = [

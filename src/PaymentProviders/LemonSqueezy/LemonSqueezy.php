@@ -136,17 +136,17 @@ class LemonSqueezy
         return json_encode(['data' => $this->data]);
     }
 
-    private function post(string $path)
+    protected function post(string $path)
     {
         return $this->makeRequest($path, self::METHOD_POST);
     }
 
-    private function delete(string $path)
+    protected function delete(string $path)
     {
         return $this->makeRequest($path, self::METHOD_DELETE);
     }
 
-    private function makeRequest(string $path, string $method)
+    protected function makeRequest(string $path, string $method)
     {
         $headers = [
             'Accept' => 'application/vnd.api+json',

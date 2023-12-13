@@ -4,21 +4,19 @@ namespace Eduka\Payments\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Brunocfalcao\Cerebrus\Cerebrus;
+use Brunocfalcao\LaravelHelpers\Classes\Token;
 use Eduka\Cube\Actions\Coupon\FindCoupon;
 use Eduka\Cube\Models\Coupon;
 use Eduka\Cube\Models\Course;
-use Eduka\Cube\Models\User;
 use Eduka\Cube\Models\Variant;
 use Eduka\Nereus\Facades\Nereus;
 use Eduka\Payments\Actions\LemonSqueezyCoupon;
-use Eduka\Payments\Events\CallbackFromPaymentGateway;
-use Eduka\Payments\Events\RedirectAwayToPaymentGateway;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\Responses\CreatedCheckoutResponse;
 use Exception;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Request as HttpRequest;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -32,10 +30,12 @@ class PaymentController extends Controller
 
     private Cerebrus $session;
 
+    private $request;
+
     public function __construct()
     {
         $this->session = new Cerebrus();
-        $this->lemonSqueezyApiKey = env('LEMONSQUEEZY_API_KEY', '');
+        $this->lemonSqueezyApiKey = env('LEMON_SQUEEZY_API_KEY', '');
     }
 
     public function redirectToCheckoutPage(HttpRequest $request): RedirectResponse
@@ -50,14 +50,6 @@ class PaymentController extends Controller
             $request->input('variant')
         );
 
-        /**
-         * @aryan: So, it's working now, you can take it from here.
-         * The userCountry will have CH, PT, DE code, and it can be
-         * matched on the country tables I hope. It uses this
-         * nomenclature: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
-         * You might need to import the countries on that format to
-         * have 100% match.
-         */
         if (request()->header('cf-ipcountry')) {
             $userCountry = request()->header('cf-ipcountry');
         }
@@ -65,78 +57,61 @@ class PaymentController extends Controller
         $paymentsApi = new LemonSqueezy($this->lemonSqueezyApiKey);
 
         $nonceKey = Str::random();
-        $trackingID = Str::random(10);
+        $trackingID = Token::create();
 
         $this->session->set('eduka:nereus:nonce', $nonceKey);
 
-        /**
-         * @bruno:
-         * Logic should be a bit different. We need to receive a new variant
-         * id from the course webpage (we can have like 2 offers from the
-         * same course, early-access and full course) with different
-         * pricing models. Changes:
-         * - The webpage should return the variant ID, in case we would
-         *   like to specify the variant directly.
-         * - There should be a variants table/eloquent model.
-         * - The product price can be removed from the db. I'll use
-         *   directly the one from the product itself. Then apply
-         *   specific coupons if needed. Or, if we don't have a specific
-         *   variant price, then it would retrieve the one from LemonS.
-         * - There should be a relationship between courses, and
-         *   variants. Even if a visitor buys a variant, at the end it
-         *   will be part of a course.
-         *   In case a course only has one variant, then the landing
-         *   page doesn't need to pass the variant itself, or if there
-         *   are several variants, then eduka should pick the one that
-         *   is marked as default.
-         */
         $checkoutResponse = $this->createCheckout($paymentsApi, $this->variant, $nonceKey, $trackingID);
 
         $checkoutUrl = (new CreatedCheckoutResponse($checkoutResponse))->checkoutUrl();
-
-        event(new RedirectAwayToPaymentGateway($trackingID, LemonSqueezy::GATEWAY_ID));
 
         return redirect()->away($checkoutUrl);
     }
 
     public function handleWebhook(HttpRequest $request)
     {
+        $this->request = $request;
+
         /**
-         * @aryan:
-         * We need to validate the request. Check:
-         * https://docs.lemonsqueezy.com/help/webhooks
-         * on the chapter "Signing requests".
+         * Controller itself will:
+         * 1. Validate the signature of the request (in non-local envs).
+         * 2. Add the order into the database.
          *
-         * @aryan:
-         * The logic of the refund should also be implemented.
-         * In case it's a refund, it should send a notification to the
-         * user with the refund information automatically.
+         * The remaining activities are called via the event
+         * that will be triggered on the order.created
+         * observer.
          */
-        $payload = $request->all();
+        try {
+            if (app()->environment() != 'local') {
+                $this->validateWebhookSignature($request);
+            }
 
-        // Verify what webhook transation type it is.
-        switch ($payload['meta']['event_name']) {
-            case 'order_created':
-                try {
-                    event(new CallbackFromPaymentGateway($payload));
-                } catch (\Exception $ex) {
-                    return response()->json(['message' => $ex->getMessage()], 500);
-                }
+            $this->storeOrder($request);
 
-                break;
-
-            case 'order_refunded':
-                break;
+            return response()->json(['status' => 'roger that'], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        // Always return 200, no matter. Exception caught inside eduka.
-        return response()->json(['status' => 'ok'], 200);
     }
 
-    /**
-     * @throws Exception
-     */
-    private function createCheckout(LemonSqueezy $paymentsApi, Variant $variant, string $nonceKey, string $trackingID): array
+    protected function validateWebhookSignature()
+    {
+        $secret = env('LEMON_SQUEEZY_SECRET', '');
+        $payload = $request->getContent();
+        $hash = hash_hmac('sha256', $payload, $secret);
+        $signature = $request->header('X-Signature', '');
+
+        if (! hash_equals($hash, $signature)) {
+            throw new Exception('Invalid signature.');
+        }
+    }
+
+    protected function storeOrder()
+    {
+        var_dump($this->request);
+    }
+
+    protected function createCheckout(LemonSqueezy $paymentsApi, Variant $variant, string $nonceKey, string $trackingID): array
     {
         try {
             $responseString = $paymentsApi
@@ -195,7 +170,7 @@ class PaymentController extends Controller
      * At the end, you just add coupons as long as new visitors
      * countries are arriving. We don't create them all at once.
      */
-    private function ensureCouponOnLemonSqueezy(string $country): void
+    protected function ensureCouponOnLemonSqueezy(string $country): void
     {
         $coupon = FindCoupon::fromCountryRecord($country, Nereus::course()->id);
 
@@ -235,7 +210,7 @@ class PaymentController extends Controller
         ]);
     }
 
-    private function log(string $message, ?Exception $e, array $data = [])
+    protected function log(string $message, ?Exception $e, array $data = [])
     {
         if ($e) {
             $data[] = [
@@ -244,27 +219,5 @@ class PaymentController extends Controller
         }
 
         Log::error($message, $data);
-    }
-
-    private function findOrCreateUser(string $email, string $name)
-    {
-        $user = User::where('email', $email)->first();
-        $newUser = false;
-
-        if (! $user) {
-            $user = User::forceCreate([
-                'name' => $name,
-                'email' => $email,
-                'password' => Hash::make(Str::random()),
-                'uuid' => Str::uuid(),
-                'created_at' => now(),
-            ]);
-
-            $newUser = true;
-        }
-
-        return [
-            $user, $newUser,
-        ];
     }
 }
