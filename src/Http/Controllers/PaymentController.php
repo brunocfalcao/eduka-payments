@@ -8,15 +8,17 @@ use Brunocfalcao\LaravelHelpers\Classes\Token;
 use Eduka\Cube\Actions\Coupon\FindCoupon;
 use Eduka\Cube\Models\Coupon;
 use Eduka\Cube\Models\Course;
+use Eduka\Cube\Models\Order;
 use Eduka\Cube\Models\Variant;
 use Eduka\Nereus\Facades\Nereus;
 use Eduka\Payments\Actions\LemonSqueezyCoupon;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\Responses\CreatedCheckoutResponse;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Request as HttpRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -108,7 +110,44 @@ class PaymentController extends Controller
 
     protected function storeOrder()
     {
-        var_dump($this->request);
+        $payload = $this->request->all();
+
+        // Columns to array paths (data_get) mappings.
+        // Except response_body.
+        $mapping = [
+            'event_name'   => 'meta.event_name',
+            'custom_data'  => 'meta.custom_data',
+            'store_id'     => 'data.attributes.store_id',
+            'customer_id'  => 'data.attributes.store_id',
+            'order_number' => 'data.attributes.order_number',
+            'user_name'    => 'data.attributes.user_name',
+            'user_email'   => 'data.attributes.user_email',
+            'subtotal_usd' => 'data.attributes.subtotal_usd',
+            'discount_total_usd' => 'data.attributes.discount_total_usd',
+            'tax_usd' => 'data.attributes.tax_usd',
+            'total_usd' => 'data.attributes.total_usd',
+            'tax_name' => 'data.attributes.tax_name',
+            'status' => 'data.attributes.status',
+            'refunded' => 'data.attributes.refunded',
+            'refunded_at' => 'data.attributes.refunded_at',
+            'order_id' => 'data.attributes.first_order_item.order_id',
+            'product_id' => 'data.attributes.first_order_item.product_id',
+            'variant_id' => 'data.attributes.first_order_item.variant_id',
+            'product_name' => 'data.attributes.first_order_item.product_name',
+            'variant_name' => 'data.attributes.first_order_item.variant_name',
+            'price' => 'data.attributes.first_order_item.price',
+            'receipt' => 'data.attributes.urls.receipt'
+        ];
+
+        $data = [];
+
+        foreach ($mapping as $column => $webhookAttribute) {
+            $data[$column] = data_get($payload, $webhookAttribute);
+        }
+
+        $data['response_body'] = $this->request->all();
+
+        Order::create($data);
     }
 
     protected function createCheckout(LemonSqueezy $paymentsApi, Variant $variant, string $nonceKey, string $trackingID): array

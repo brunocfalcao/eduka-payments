@@ -3,6 +3,7 @@
 namespace Eduka\Payments\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class SimulateWebhook extends Command
@@ -13,6 +14,9 @@ class SimulateWebhook extends Command
 
     public function handle()
     {
+        DB::table('orders')->truncate();
+        DB::table('users')->where('id', '>', 1)->delete();
+
         $url = 'http://brunofalcao.local:8000/lemonsqueezy/webhook';
 
         $payload = [
@@ -119,7 +123,7 @@ class SimulateWebhook extends Command
         $payloadJson = json_encode($payload);
 
         // Secret for HMAC hash
-        $secret = 'eduka-2023-afh#';
+        $secret = 'eduka-1234-';
 
         // Generate the HMAC hash of the payload
         $signature = hash_hmac('sha256', $payloadJson, $secret);
@@ -130,9 +134,6 @@ class SimulateWebhook extends Command
             'X-Event-Name' => 'order_created',
             'X-Signature' => $signature,
         ];
-
-        // Send the POST request
-        $response = Http::withHeaders($headers)->post($url, $payload);
 
         try {
             $this->info('Calling '.$url.' ...');
