@@ -35,7 +35,7 @@ class SimulateWebhook extends Command
                     'identifier' => '104e18a2-d755-4d4b-80c4-a6c1dcbe1c10',
                     'order_number' => 1,
                     'user_name' => 'Darlene Daugherty',
-                    'user_email' => 'bruno.falcao@live.com',
+                    'user_email' => 'gernser@yahoo.com',
                     'currency' => 'USD',
                     'currency_rate' => '1.0000',
                     'subtotal' => 999,
