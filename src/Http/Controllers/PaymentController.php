@@ -4,7 +4,7 @@ namespace Eduka\Payments\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Brunocfalcao\Cerebrus\Cerebrus;
-use Brunocfalcao\LaravelHelpers\Classes\Token;
+use Brunocfalcao\Tokenizer\Models\Token;
 use Eduka\Cube\Actions\Coupon\FindCoupon;
 use Eduka\Cube\Models\Coupon;
 use Eduka\Cube\Models\Course;
@@ -16,10 +16,9 @@ use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\Responses\CreatedCheckoutResponse;
 use Exception;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Request as HttpRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
@@ -51,18 +50,11 @@ class PaymentController extends Controller
             $request->input('variant')
         );
 
-        if (request()->header('cf-ipcountry')) {
-            $userCountry = request()->header('cf-ipcountry');
-        }
+        $userCountry ??= request()->header('cf-ipcountry');
 
         $paymentsApi = new LemonSqueezy($this->lemonSqueezyApiKey);
 
-        $nonceKey = Str::random();
-        $trackingID = Token::create();
-
-        $this->session->set('eduka:nereus:nonce', $nonceKey);
-
-        $checkoutResponse = $this->createCheckout($paymentsApi, $this->variant, $nonceKey, $trackingID);
+        $checkoutResponse = $this->createCheckout($paymentsApi, $this->variant, Token::createToken());
 
         $checkoutUrl = (new CreatedCheckoutResponse($checkoutResponse))->checkoutUrl();
 
@@ -149,15 +141,14 @@ class PaymentController extends Controller
         Order::create($data);
     }
 
-    protected function createCheckout(LemonSqueezy $paymentsApi, Variant $variant, string $nonceKey, string $trackingID): array
+    protected function createCheckout(LemonSqueezy $paymentsApi, Variant $variant, Token $token): array
     {
         try {
             $responseString = $paymentsApi
-                ->setRedirectUrl(route('purchase.callback', $nonceKey))
+                ->setRedirectUrl(route('purchase.callback', $token->token))
                 ->setExpiresAt(now()->addHours(2)->toString())
                 ->setCustomData([
-                    'course_variant_uuid' => $variant->uuid,
-                    'tracking_id' => $trackingID,
+                    'variant_uuid' => $variant->uuid,
                 ]);
 
             // Conditionally applying setCustomPrice.
@@ -168,9 +159,11 @@ class PaymentController extends Controller
                     );
             }
 
+            $variant = Variant::with('course')->find($variant->id);
+
             $responseString = $responseString
                 ->setStoreId($variant->course->paymentProviderStoreId())
-                ->setVariantId($variant->lemonsqueezy_variant_id)
+                ->setVariantId($variant->lemon_squeezy_variant_id)
                 ->createCheckout();
 
             $raw = json_decode($responseString, true);

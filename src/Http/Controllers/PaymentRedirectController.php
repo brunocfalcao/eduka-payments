@@ -4,6 +4,7 @@ namespace Eduka\Payments\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Brunocfalcao\Cerebrus\Cerebrus;
+use Brunocfalcao\Tokenizer\Models\Token;
 use Eduka\Nereus\Facades\Nereus;
 
 class PaymentRedirectController extends Controller
@@ -21,7 +22,7 @@ class PaymentRedirectController extends Controller
         $this->session = new Cerebrus();
     }
 
-    public function thanksForBuying(string $nonce)
+    public function thanksForBuying(string $token)
     {
         $course = Nereus::course();
 
@@ -30,12 +31,10 @@ class PaymentRedirectController extends Controller
                    ->with(['message' => self::THANK_YOU_ERROR_NO_COURSE]);
         }
 
-        if (! $this->session->has('eduka:nereus:nonce')) {
+        if (Token::burn($token)) {
             return view('course::thanks-for-buying')
                    ->with(['message' => self::THANK_YOU_ERROR_NO_NONCE]);
         }
-
-        $this->session->unset('eduka:nereus:nonce');
 
         return view('course::thanks-for-buying')
             ->with(['course' => $course]);

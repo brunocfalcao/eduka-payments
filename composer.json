@@ -17,10 +17,11 @@
     "require": {
         "php": "^8.0",
         "brunocfalcao/eduka-abstracts": "dev-master",
+        "brunocfalcao/laravel-tokenizer": "dev-master",
+        "brunocfalcao/laravel-helpers": "dev-master",
         "illuminate/contracts": "^10.0",
         "lemonsqueezy/laravel": "^0.2.1",
-        "guzzlehttp/guzzle": "^7.0",
-        "brunocfalcao/laravel-helpers": "dev-master"
+        "guzzlehttp/guzzle": "^7.0"
     },
     "autoload": {
         "psr-4": {
