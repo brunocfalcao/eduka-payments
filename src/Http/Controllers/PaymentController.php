@@ -16,8 +16,8 @@ use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\Responses\CreatedCheckoutResponse;
 use Exception;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Http\Request;
+use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
