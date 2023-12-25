@@ -173,7 +173,7 @@ class PaymentController extends Controller
             }
 
             return $raw;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->log('could not create checkout', $e);
             throw $e;
         }

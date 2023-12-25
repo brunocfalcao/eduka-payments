@@ -103,7 +103,7 @@ class SyncPurchasePowerParity extends EdukaCommand
                 // delete the coupon first
                 try {
                     $couponApi->deleteDiscount($coupon->remote_reference_id);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $this->logError('could not delete coupon.', $e);
 
                     return;
@@ -121,7 +121,7 @@ class SyncPurchasePowerParity extends EdukaCommand
                     $couponPercentage,
                     $isFlatDiscount,
                 );
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->logError('could not create new coupon.', $e);
 
                 return;
