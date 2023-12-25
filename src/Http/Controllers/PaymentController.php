@@ -47,7 +47,7 @@ class PaymentController extends Controller
         }
 
         $this->variant = $this->course->getVariantOrDefault(
-            $request->input('variant')
+            Variant::firstWhere('uuid', $request->input('variant'))
         );
 
         $userCountry ??= request()->header('cf-ipcountry');
