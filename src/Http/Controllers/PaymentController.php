@@ -38,6 +38,11 @@ class PaymentController extends Controller
         $this->lemonSqueezyApiKey = env('LEMON_SQUEEZY_API_KEY', '');
     }
 
+    public function thanksForBuying()
+    {
+        return view('course::thanks-for-buying');
+    }
+
     public function redirectToCheckoutPage(HttpRequest $request): RedirectResponse
     {
         $this->course = Nereus::course();
