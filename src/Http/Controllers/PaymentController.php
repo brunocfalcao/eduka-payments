@@ -70,11 +70,9 @@ class PaymentController extends Controller
     {
         $this->request = $request;
 
-        info(json_encode($request->all()));
-
         /**
          * Controller itself will:
-         * 1. Validate the signature of the request (in non-local envs).
+         * 1. Validate the token from the webhook payload.
          * 2. Add the order into the database.
          *
          * The remaining activities are called via the event
@@ -82,28 +80,54 @@ class PaymentController extends Controller
          * observer.
          */
         try {
-            if (app()->environment() != 'local') {
-                $this->validateWebhookSignature($request);
-            }
+            // Validates and burns token.
+            $this->validateWebhookToken();
 
+            // The variant UUID should be the same as the LS varint id instance.
+            $this->checkVariantUuid();
+
+            // Store the order and start the course assignment process.
             $this->storeOrder($request);
 
-            return response()->json(['status' => 'roger that'], 200);
+            // We can return ok. Any exception needs to be treated later.
+            return response()->json();
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
-    protected function validateWebhookSignature()
+    protected function checkVariantUuid()
     {
-        $secret = env('LEMON_SQUEEZY_SECRET', '');
-        $payload = $request->getContent();
-        $hash = hash_hmac('sha256', $payload, $secret);
-        $signature = $request->header('X-Signature', '');
-
-        if (! hash_equals($hash, $signature)) {
-            throw new Exception('Invalid signature.');
+        if (! array_key_exists('variant_uuid', $this->request->all()['meta']['custom_data'])) {
+            throw new \Exception('Variant UUID not present. Your IP was blacklisted');
         }
+
+        $uuid = $this->request->all()['meta']['custom_data']['variant_uuid'];
+        $variantId = $this->request->all()['data']['attributes']['first_order_item']['variant_id'];
+
+        if (! Variant::firstWhere('lemon_squeezy_variant_id', $variantId)?->uuid == $uuid) {
+            throw new \Exception('Variant UUID vs LS Variant UUID mismatch');
+        }
+    }
+
+    protected function validateWebhookToken()
+    {
+        if (! array_key_exists('token', $this->request->all()['meta']['custom_data'])) {
+            throw new \Exception('Invalid token. Your IP was blacklisted');
+        }
+
+        $token = $this->request->all()['meta']['custom_data']['token'];
+
+        if (!$token) {
+            throw new \Exception('Invalid token. Your IP was blacklisted');
+        }
+
+        if (! Token::isValid($token)) {
+            throw new \Exception('Invalid token hash code');
+        }
+
+        // Burn token so it cannot be used again.
+        Token::burn($token);
     }
 
     protected function storeOrder()
@@ -156,6 +180,7 @@ class PaymentController extends Controller
                 ->setExpiresAt(now()->addHours(2)->toString())
                 ->setCustomData([
                     'variant_uuid' => $variant->uuid,
+                    'token' => Token::createToken()
                 ]);
 
             // Conditionally applying setCustomPrice.

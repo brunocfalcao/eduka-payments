@@ -2,6 +2,8 @@
 
 namespace Eduka\Payments\Commands;
 
+use Brunocfalcao\Tokenizer\Models\Token;
+use Eduka\Cube\Models\Variant;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -27,7 +29,8 @@ class SimulateWebhook extends Command
             'meta' => [
                 'event_name' => 'order_created',
                 'custom_data' => [
-                    'customer_id' => 25,
+                    'variant_uuid' => Variant::first()->uuid,
+                    'token' => Token::createToken()
                 ],
             ],
             'data' => [
@@ -64,7 +67,7 @@ class SimulateWebhook extends Command
                         'id' => 1,
                         'order_id' => 1,
                         'product_id' => 1,
-                        'variant_id' => 70434,
+                        'variant_id' => Variant::first()->lemon_squeezy_variant_id,
                         'product_name' => 'Test Limited License for 2 years',
                         'variant_name' => 'Default',
                         'price' => 1199,
