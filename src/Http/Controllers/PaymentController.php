@@ -180,7 +180,7 @@ class PaymentController extends Controller
                 ->setExpiresAt(now()->addHours(2)->toString())
                 ->setCustomData([
                     'variant_uuid' => $variant->uuid,
-                    'token' => Token::createToken()
+                    'token' => Token::createToken()->token
                 ]);
 
             // Conditionally applying setCustomPrice.
