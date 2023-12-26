@@ -14,8 +14,12 @@ class SimulateWebhook extends Command
 
     public function handle()
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
         DB::table('orders')->truncate();
         DB::table('users')->where('id', '>', 1)->delete();
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         $url = 'http://brunofalcao.local:8000/lemonsqueezy/webhook';
 

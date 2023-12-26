@@ -70,6 +70,8 @@ class PaymentController extends Controller
     {
         $this->request = $request;
 
+        info(json_encode($request->all()));
+
         /**
          * Controller itself will:
          * 1. Validate the signature of the request (in non-local envs).
