@@ -118,7 +118,7 @@ class PaymentController extends Controller
 
         $token = $this->request->all()['meta']['custom_data']['token'];
 
-        if (!$token) {
+        if (! $token) {
             throw new \Exception('Invalid token. Your IP was blacklisted');
         }
 
@@ -180,7 +180,7 @@ class PaymentController extends Controller
                 ->setExpiresAt(now()->addHours(2)->toString())
                 ->setCustomData([
                     'variant_uuid' => $variant->uuid,
-                    'token' => Token::createToken()->token
+                    'token' => Token::createToken()->token,
                 ]);
 
             // Conditionally applying setCustomPrice.

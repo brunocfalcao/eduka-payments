@@ -30,7 +30,7 @@ class SimulateWebhook extends Command
                 'event_name' => 'order_created',
                 'custom_data' => [
                     'variant_uuid' => Variant::first()->uuid,
-                    'token' => Token::createToken()
+                    'token' => Token::createToken(),
                 ],
             ],
             'data' => [
