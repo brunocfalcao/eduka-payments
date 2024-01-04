@@ -99,31 +99,31 @@ class PaymentController extends Controller
     protected function checkVariantUuid()
     {
         if (! array_key_exists('variant_uuid', $this->request->all()['meta']['custom_data'])) {
-            throw new \Exception('Variant UUID not present. Your IP was blacklisted');
+            throw new Exception('Variant UUID not present. Your IP was blacklisted');
         }
 
         $uuid = $this->request->all()['meta']['custom_data']['variant_uuid'];
         $variantId = $this->request->all()['data']['attributes']['first_order_item']['variant_id'];
 
         if (! Variant::firstWhere('lemon_squeezy_variant_id', $variantId)?->uuid == $uuid) {
-            throw new \Exception('Variant UUID vs LS Variant UUID mismatch');
+            throw new Exception('Variant UUID vs LS Variant UUID mismatch');
         }
     }
 
     protected function validateWebhookToken()
     {
         if (! array_key_exists('token', $this->request->all()['meta']['custom_data'])) {
-            throw new \Exception('Invalid token. Your IP was blacklisted');
+            throw new Exception('Invalid token. Your IP was blacklisted');
         }
 
         $token = $this->request->all()['meta']['custom_data']['token'];
 
         if (! $token) {
-            throw new \Exception('Invalid token. Your IP was blacklisted');
+            throw new Exception('Invalid token. Your IP was blacklisted');
         }
 
         if (! Token::isValid($token)) {
-            throw new \Exception('Invalid token hash code');
+            throw new Exception('Invalid token hash code');
         }
 
         // Burn token so it cannot be used again.
@@ -187,14 +187,14 @@ class PaymentController extends Controller
             if ($variant->priceOverrideInCents()) {
                 $responseString = $responseString
                     ->setCustomPrice(
-                        $variant->priceOverrideInCents()
+                        $variant->lemon_squeezy_price_override * 100
                     );
             }
 
             $variant = Variant::with('course')->find($variant->id);
 
             $responseString = $responseString
-                ->setStoreId($variant->course->paymentProviderStoreId())
+                ->setStoreId($variant->course->lemon_squeezy_store_id)
                 ->setVariantId($variant->lemon_squeezy_variant_id)
                 ->createCheckout();
 
@@ -255,7 +255,7 @@ class PaymentController extends Controller
 
         $reference = (new LemonSqueezyCoupon)->create(
             $couponApi,
-            $this->course->paymentProviderStoreId(),
+            $this->course->lemon_squeezy_store_id,
             $code,
             $coupon->discount_amount,
             $coupon->is_flat_discount,

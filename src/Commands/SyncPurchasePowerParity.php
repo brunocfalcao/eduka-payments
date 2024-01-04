@@ -116,7 +116,7 @@ class SyncPurchasePowerParity extends EdukaCommand
             try {
                 $reference = (new LemonSqueezyCoupon)->create(
                     $couponApi,
-                    $course->paymentProviderStoreId(),
+                    $course->lemon_squeezy_store_id,
                     $coupon->code,
                     $couponPercentage,
                     $isFlatDiscount,
