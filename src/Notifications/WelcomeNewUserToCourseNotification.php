@@ -35,9 +35,9 @@ class WelcomeNewUserToCourseNotification extends Notification
     {
         // @todo update message
         return (new MailMessage)
-                    ->line('[Welcome new user mail] New Course Email Welcome to '.$this->courseName)
-                    ->action('Set password', url('/'))
-                    ->line('We welcome you to this course, kindly use the reset password feature to set a new password!');
+            ->line('[Welcome new user mail] New Course Email Welcome to '.$this->courseName)
+            ->action('Set password', url('/'))
+            ->line('We welcome you to this course, kindly use the reset password feature to set a new password!');
     }
 
     /**
