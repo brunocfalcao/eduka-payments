@@ -200,7 +200,7 @@ class PaymentController extends Controller
 
             return $raw;
         } catch (Exception $e) {
-            throw new Exception('could not create checkout - ' . $e->getMessage());
+            throw new Exception('could not create checkout - '.$e->getMessage());
         }
     }
 }

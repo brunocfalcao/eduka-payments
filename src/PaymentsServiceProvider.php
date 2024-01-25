@@ -21,6 +21,7 @@ class PaymentsServiceProvider extends EdukaServiceProvider
 
     public function register()
     {
+        //
     }
 
     protected function registerEventListeners()
