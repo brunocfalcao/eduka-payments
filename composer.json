@@ -15,7 +15,7 @@
         }
     ],
     "require": {
-        "php": "^8.0",
+        "php": "^8.2",
         "brunocfalcao/eduka-abstracts": "dev-master",
         "brunocfalcao/laravel-tokenizer": "dev-master",
         "brunocfalcao/laravel-helpers": "dev-master",
