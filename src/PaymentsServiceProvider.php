@@ -4,7 +4,6 @@ namespace Eduka\Payments;
 
 use Eduka\Abstracts\Classes\EdukaServiceProvider;
 use Eduka\Payments\Commands\SimulateWebhook;
-use Eduka\Payments\Commands\SyncPurchasePowerParity;
 use Eduka\Payments\Events\CallbackFromPaymentGateway;
 use Eduka\Payments\Listeners\ProcessPaymentWebhook;
 use Illuminate\Support\Facades\Event;
@@ -35,7 +34,6 @@ class PaymentsServiceProvider extends EdukaServiceProvider
     protected function loadCommands()
     {
         $this->commands([
-            SyncPurchasePowerParity::class,
             SimulateWebhook::class,
         ]);
     }
