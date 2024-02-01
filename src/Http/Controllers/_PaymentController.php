@@ -29,30 +29,46 @@ class PaymentController extends Controller
 
     public function __construct()
     {
-        $this->session = new Cerebrus();
         $this->lemonSqueezyApiKey = env('LEMON_SQUEEZY_API_KEY', '');
     }
 
+    /**
+     * Page been redirected after the payment checkout is completed.
+     * Like a "thank you for buying my course" webpage.
+     */
     public function thanksForBuying()
     {
         return view('course::thanks-for-buying');
     }
 
+    /**
+     * After we settle and verify the HTTP request that came from the
+     * "buy course" button, we can then redirect to a new link (checkout)
+     * that is part of the lemon squeezy checkout process.
+     *
+     * @return void
+     */
     public function redirectToCheckoutPage(HttpRequest $request): RedirectResponse
     {
         $this->course = Nereus::course();
+        $this->variant = Variant::firstWhere('uuid', $request->input('variant'));
+        $paymentsApi = new LemonSqueezy($this->lemonSqueezyApiKey);
 
-        if (! $this->course) {
+        if (! $this->course || ! $this->variant || ! $paymentsApi) {
+            // No minimum data to continue. Abort.
             return redirect()->back();
         }
 
-        $this->variant = Variant::firstWhere('uuid', $request->input('variant'));
-
+        // https://developers.cloudflare.com/fundamentals/reference/http-request-headers/
         $userCountry ??= request()->header('cf-ipcountry');
 
-        $paymentsApi = new LemonSqueezy($this->lemonSqueezyApiKey);
+        // Contains all checkout custom information that is needed for eduka.
+        $payload = [
+            'variant' => $this->variant,
+            'country' => $userCountry,
+        ];
 
-        $checkoutResponse = $this->createCheckout($paymentsApi, $this->variant, Token::createToken());
+        $checkoutResponse = $this->createCheckout($paymentsApi, $payload);
 
         $checkoutUrl = (new CreatedCheckoutResponse($checkoutResponse))->checkoutUrl();
 
@@ -76,8 +92,8 @@ class PaymentController extends Controller
             // Validates and burns token.
             $this->validateWebhookToken();
 
-            // The variant UUID should be the same as the LS variant id instance.
-            $this->checkVariantUuid();
+            // Verify if the variant id is part of our course variants.
+            $this->validateLemonSqueezyVariantId();
 
             // Store the order and start the course assignment process.
             $this->storeOrder($request);
@@ -89,34 +105,19 @@ class PaymentController extends Controller
         }
     }
 
-    protected function checkVariantUuid()
+    protected function validateLemonSqueezyVariantId()
     {
-        if (! array_key_exists('variant_uuid', $this->request->all()['meta']['custom_data'])) {
-            throw new Exception('Variant UUID not present. Your IP was blacklisted');
-        }
-
-        $uuid = $this->request->all()['meta']['custom_data']['variant_uuid'];
-        $variantId = $this->request->all()['data']['attributes']['first_order_item']['variant_id'];
-
-        if (! Variant::firstWhere('lemon_squeezy_variant_id', $variantId)?->uuid == $uuid) {
-            throw new Exception('Variant UUID vs LS Variant UUID mismatch');
-        }
+        $customData = collect($this->request->all());
     }
 
     protected function validateWebhookToken()
     {
-        if (! array_key_exists('token', $this->request->all()['meta']['custom_data'])) {
+        $customData = collect($this->request->all());
+
+        $token = data_get('meta.custom_data.token', $customData);
+
+        if (! $token || ! Token::isValid($token)) {
             throw new Exception('Invalid token. Your IP was blacklisted');
-        }
-
-        $token = $this->request->all()['meta']['custom_data']['token'];
-
-        if (! $token) {
-            throw new Exception('Invalid token. Your IP was blacklisted');
-        }
-
-        if (! Token::isValid($token)) {
-            throw new Exception('Invalid token hash code');
         }
 
         // Burn token so it cannot be used again.
@@ -165,14 +166,13 @@ class PaymentController extends Controller
         Order::create($data);
     }
 
-    protected function createCheckout(LemonSqueezy $paymentsApi, Variant $variant, Token $token): array
+    protected function createCheckout(LemonSqueezy $paymentsApi, array $payload): array
     {
         try {
             $responseString = $paymentsApi
-                ->setRedirectUrl(route('purchase.callback', $token->token))
+                ->setRedirectUrl(route('purchase.callback', Token::createToken()->token))
                 ->setExpiresAt(now()->addHours(2)->toString())
                 ->setCustomData([
-                    'variant_uuid' => $variant->uuid,
                     'token' => Token::createToken()->token,
                 ]);
 
