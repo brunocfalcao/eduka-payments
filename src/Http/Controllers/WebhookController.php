@@ -2,9 +2,9 @@
 
 namespace Eduka\Payments\Http\Controllers;
 
-use Exception;
-use Eduka\Cube\Models\Order;
 use Brunocfalcao\Tokenizer\Models\Token;
+use Eduka\Cube\Models\Order;
+use Exception;
 
 class WebhookController
 {
@@ -40,7 +40,6 @@ class WebhookController
         }
     }
 
-
     protected function validateLemonSqueezyVariantId()
     {
         $customData = collect($this->request->all());
@@ -51,6 +50,8 @@ class WebhookController
         $customData = collect($this->request->all());
 
         $token = data_get('meta.custom_data.token', $customData);
+
+        dd($token);
 
         if (! $token || ! Token::isValid($token)) {
             throw new Exception('Invalid token. Your IP was blacklisted');

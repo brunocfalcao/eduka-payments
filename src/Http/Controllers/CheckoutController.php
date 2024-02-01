@@ -42,7 +42,7 @@ class CheckoutController
     {
         try {
             $responseString = $paymentsApi
-                ->setRedirectUrl(route('purchase.callback', ['token'=> Token::createToken()->token]))
+                ->setRedirectUrl(route('purchase.callback', ['token' => Token::createToken()->token]))
                 ->setExpiresAt(now()->addHours(2)->toString())
                 ->setCustomData([
                     'token' => Token::createToken()->token,
