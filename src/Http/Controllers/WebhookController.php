@@ -51,10 +51,8 @@ class WebhookController
 
         $token = data_get('meta.custom_data.token', $customData);
 
-        dd($token);
-
         if (! $token || ! Token::isValid($token)) {
-            throw new Exception('Invalid token. Your IP was blacklisted');
+            throw new Exception('Invalid token');
         }
 
         // Burn token so it cannot be used again.
