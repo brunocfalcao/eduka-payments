@@ -26,7 +26,7 @@ class WebhookController
         $this->validateLemonSqueezyVariantId();
 
         // Store the order and start the course assignment process.
-        $this->storeOrder($request);
+        $this->storeOrder();
 
         // We can return ok. Any exception needs to be treated later.
         return response()->json();
@@ -34,7 +34,15 @@ class WebhookController
 
     protected function validateLemonSqueezyVariantId()
     {
-        $customData = collect($this->request->all());
+        $payload = request()->all();
+
+        // This is the LS variant id, not the eduka variants.id value.
+        $variantId = data_get($payload, 'data.attributes.first_order_item.variant_id');
+
+        // Check if there is an eduka variant with this LS variant id.
+        if (! Variant::where('lemon_squeezy_variant_id', $variantId)->exists()) {
+            throw new \Exception('No variant matched in eduka');
+        }
     }
 
     protected function validateWebhookToken()
