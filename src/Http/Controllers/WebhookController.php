@@ -47,16 +47,13 @@ class WebhookController
 
     protected function validateWebhookToken()
     {
-        $customData = collect($this->request->all());
+        $payload = $this->request->all();
 
-        $token = data_get('meta.custom_data.token', $customData);
+        $token = data_get($payload, 'meta.custom_data.token');
 
-        if (! $token || ! Token::isValid($token)) {
+        if (! $token || ! Token::burn($token)) {
             throw new Exception('Invalid token (' . $token . ')');
         }
-
-        // Burn token so it cannot be used again.
-        Token::burn($token);
     }
 
     protected function storeOrder()
