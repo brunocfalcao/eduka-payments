@@ -117,7 +117,7 @@ class PaymentController extends Controller
         $token = data_get('meta.custom_data.token', $customData);
 
         if (! $token || ! Token::isValid($token)) {
-            throw new Exception('Invalid token. Your IP was blacklisted');
+            throw new Exception('Invalid token. Your IP was blacklisted2');
         }
 
         // Burn token so it cannot be used again.
