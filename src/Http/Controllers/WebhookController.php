@@ -2,9 +2,10 @@
 
 namespace Eduka\Payments\Http\Controllers;
 
-use Brunocfalcao\Tokenizer\Models\Token;
-use Eduka\Cube\Models\Order;
 use Exception;
+use Eduka\Cube\Models\Order;
+use Eduka\Cube\Models\Variant;
+use Brunocfalcao\Tokenizer\Models\Token;
 
 class WebhookController
 {
@@ -20,7 +21,7 @@ class WebhookController
          * observer.
          */
         // Validates and burns token.
-        //$this->validateWebhookToken();
+        $this->validateWebhookToken();
 
         // Verify if the variant id is part of our course variants.
         $this->validateLemonSqueezyVariantId();
@@ -51,7 +52,7 @@ class WebhookController
 
         $token = data_get($payload, 'meta.custom_data.token');
 
-        Token::burn($token);
+        //Token::burn($token);
     }
 
     protected function storeOrder()
