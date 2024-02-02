@@ -52,7 +52,7 @@ class WebhookController
         $token = data_get('meta.custom_data.token', $customData);
 
         if (! $token || ! Token::isValid($token)) {
-            throw new Exception('Invalid token');
+            throw new Exception('Invalid token (' . $token . ')');
         }
 
         // Burn token so it cannot be used again.
