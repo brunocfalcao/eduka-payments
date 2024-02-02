@@ -23,21 +23,17 @@ class WebhookController
          * that will be triggered on the order.created
          * observer.
          */
-        try {
-            // Validates and burns token.
-            $this->validateWebhookToken();
+        // Validates and burns token.
+        $this->validateWebhookToken();
 
-            // Verify if the variant id is part of our course variants.
-            $this->validateLemonSqueezyVariantId();
+        // Verify if the variant id is part of our course variants.
+        $this->validateLemonSqueezyVariantId();
 
-            // Store the order and start the course assignment process.
-            $this->storeOrder($request);
+        // Store the order and start the course assignment process.
+        $this->storeOrder($request);
 
-            // We can return ok. Any exception needs to be treated later.
-            return response()->json();
-        } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        // We can return ok. Any exception needs to be treated later.
+        return response()->json();
     }
 
     protected function validateLemonSqueezyVariantId()
