@@ -56,8 +56,10 @@ class CheckoutController
                     );
             }
 
+            $course = Nereus::course();
+
             $responseString = $responseString
-                ->setStoreId($this->variant->course->lemon_squeezy_store_id)
+                ->setStoreId($course->lemon_squeezy_store_id)
                 ->setVariantId($this->variant->lemon_squeezy_variant_id)
                 ->createCheckout();
 
@@ -94,7 +96,7 @@ class CheckoutController
     protected function getLemonSqueezyApi()
     {
         $this->api = new LemonSqueezy(
-            config('eduka.integrations.lemon_squeezy.api_key')
+            Nereus::course()->lemon_squeezy_api_key
         );
     }
 
