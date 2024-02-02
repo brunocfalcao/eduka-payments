@@ -26,11 +26,11 @@ class WebhookController
         // Verify if the variant id is part of our course variants.
         $this->validateLemonSqueezyVariantId();
 
-        // Store the order and start the course assignment process.
-        $this->storeOrder();
-
         // We can return ok. Any exception needs to be treated later.
         return response()->json();
+
+        // Store the order and start the course assignment process.
+        $this->storeOrder();
     }
 
     protected function validateLemonSqueezyVariantId()
