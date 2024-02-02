@@ -52,7 +52,7 @@ class WebhookController
 
         $token = data_get($payload, 'meta.custom_data.token');
 
-        //Token::burn($token);
+        Token::burn($token);
     }
 
     protected function storeOrder()
