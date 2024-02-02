@@ -8,12 +8,8 @@ use Exception;
 
 class WebhookController
 {
-    protected $request;
-
     public function __invoke()
     {
-        $this->request = request();
-
         /**
          * Controller itself will:
          * 1. Validate the token from the webhook payload.
@@ -43,7 +39,7 @@ class WebhookController
 
     protected function validateWebhookToken()
     {
-        $payload = $this->request->all();
+        $payload = request()->all();
 
         $token = data_get($payload, 'meta.custom_data.token');
 
