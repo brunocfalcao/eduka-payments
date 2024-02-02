@@ -47,9 +47,7 @@ class WebhookController
 
         $token = data_get($payload, 'meta.custom_data.token');
 
-        if (! $token || ! Token::burn($token)) {
-            throw new Exception('Invalid token ('.$token.')');
-        }
+        Token::burn($token);
     }
 
     protected function storeOrder()
