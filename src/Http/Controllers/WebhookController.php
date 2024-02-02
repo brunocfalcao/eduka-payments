@@ -20,7 +20,7 @@ class WebhookController
          * observer.
          */
         // Validates and burns token.
-        $this->validateWebhookToken();
+        //$this->validateWebhookToken();
 
         // Verify if the variant id is part of our course variants.
         $this->validateLemonSqueezyVariantId();
