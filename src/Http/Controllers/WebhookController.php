@@ -21,13 +21,8 @@ class WebhookController
          * observer.
          */
 
-        info('webhook called.');
-
         // Validates and burns token.
         $this->validateWebhookToken();
-
-        // We can return ok. Any exception needs to be treated later.
-        return response()->json();
 
         // Verify if the variant id is part of our course variants.
         $this->validateLemonSqueezyVariantId();
