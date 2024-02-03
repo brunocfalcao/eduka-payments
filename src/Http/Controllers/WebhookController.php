@@ -21,6 +21,8 @@ class WebhookController
          * observer.
          */
 
+        info('-- Webhook called --');
+
         // Validates and burns token.
         $this->validateWebhookToken();
 
