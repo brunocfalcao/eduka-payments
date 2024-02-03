@@ -53,8 +53,6 @@ class WebhookController
 
         $token = data_get($payload, 'meta.custom_data.token');
 
-        var_dump(Token::firstWhere('token', $token)->count());
-
         Token::burn($token);
     }
 
