@@ -21,8 +21,6 @@ class WebhookController
          * observer.
          */
 
-        info('-- Webhook called for ' . request()->all()['meta']['event_name']);
-
         // Validates and burns token.
         $this->validateWebhookToken();
 
