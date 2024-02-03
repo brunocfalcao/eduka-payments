@@ -57,7 +57,7 @@ class WebhookController
 
     protected function storeOrder()
     {
-        $payload = $this->request->all();
+        $payload = request()->all();
 
         // Columns to array paths (data_get) mappings.
         // Except response_body.
