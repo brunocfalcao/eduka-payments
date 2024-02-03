@@ -20,6 +20,12 @@ class WebhookController
          * that will be triggered on the order.created
          * observer.
          */
+
+        info('webhook called.');
+
+        // We can return ok. Any exception needs to be treated later.
+        return response()->json();
+
         // Validates and burns token.
         $this->validateWebhookToken();
 
@@ -51,6 +57,8 @@ class WebhookController
         $payload = request()->all();
 
         $token = data_get($payload, 'meta.custom_data.token');
+
+        var_dump(Token::firstWhere('token', $token)->count());
 
         Token::burn($token);
     }
