@@ -2,10 +2,10 @@
 
 namespace Eduka\Payments\Http\Controllers;
 
-use Exception;
+use Brunocfalcao\Tokenizer\Models\Token;
 use Eduka\Cube\Models\Order;
 use Eduka\Cube\Models\Variant;
-use Brunocfalcao\Tokenizer\Models\Token;
+use Exception;
 
 class WebhookController
 {
@@ -29,6 +29,8 @@ class WebhookController
 
         // Store the order and start the course assignment process.
         $this->storeOrder();
+
+        return response(200);
 
         // We can return ok. Any exception needs to be treated later.
         return response()->json();
@@ -61,7 +63,7 @@ class WebhookController
         $payload = request()->all();
 
         // Columns to array paths (data_get) mappings.
-        // Except response_body.
+        // Except response_body and variant_id.
         $mapping = [
             'event_name' => 'meta.event_name',
             'custom_data' => 'meta.custom_data',
@@ -95,6 +97,12 @@ class WebhookController
 
         $data['response_body'] = request()->all();
 
+        $lsVariantId = data_get($payload, 'data.attributes.first_order_item.variant_id');
+
+        $data['variant_id'] = Variant::firstWhere('lemon_squeezy_variant_id', $lsVariantId)->id;
+
         Order::create($data);
+
+        info('order created');
     }
 }

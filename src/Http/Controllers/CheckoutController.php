@@ -8,6 +8,7 @@ use Eduka\Nereus\Facades\Nereus;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
 use Eduka\Payments\PaymentProviders\LemonSqueezy\Responses\CreatedCheckoutResponse;
 use Exception;
+use Illuminate\Support\Facades\URL;
 
 class CheckoutController
 {
@@ -42,9 +43,13 @@ class CheckoutController
     {
         try {
             $responseString = $paymentsApi
-                ->setRedirectUrl(route('purchase.callback', ['token' => Token::createToken()->token]))
-                ->setExpiresAt(now()->addHours(2)->toString())
+                ->setRedirectUrl(URL::temporarySignedRoute(
+                    'purchase.callback',
+                    now()->addMinutes(5)
+                ))
+                ->setExpiresAt(now()->addHours(1)->toString())
                 ->setCustomData([
+                    // This token will be burnt on the webhook controller.
                     'token' => Token::createToken()->token,
                 ]);
 

@@ -2,6 +2,7 @@
 
 namespace Eduka\Payments\Commands;
 
+use Brunocfalcao\Tokenizer\Models\Token;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -16,6 +17,9 @@ class SimulateWebhook extends Command
     {
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
+        DB::table('tokens')
+            ->truncate();
+
         DB::table('orders')
             ->truncate();
 
@@ -24,6 +28,9 @@ class SimulateWebhook extends Command
             ->delete();
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
+
+        // Create the token that will be called by the json below.
+        Token::createToken('M8DIhc1py9BMYNe29kBarYFozxJ0tR4yYubBYve2');
 
         $url = 'http://brunofalcao.local:8000/lemonsqueezy/webhook';
 
