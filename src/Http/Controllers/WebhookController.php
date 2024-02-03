@@ -95,7 +95,7 @@ class WebhookController
             $data[$column] = data_get($payload, $webhookAttribute);
         }
 
-        $data['response_body'] = $request()->all();
+        $data['response_body'] = request()->all();
 
         //Order::create($data);
     }
