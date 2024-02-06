@@ -102,7 +102,5 @@ class WebhookController
         $data['variant_id'] = Variant::firstWhere('lemon_squeezy_variant_id', $lsVariantId)->id;
 
         Order::create($data);
-
-        info('order created');
     }
 }
