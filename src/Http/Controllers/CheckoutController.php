@@ -20,6 +20,8 @@ class CheckoutController
 
     protected $payload;
 
+    protected $checkoutUrl;
+
     public function __invoke()
     {
         $this->getLemonSqueezyApi();
@@ -32,11 +34,16 @@ class CheckoutController
 
         $this->createPayload();
 
+        $this->createCheckoutLink();
+
+        return redirect()->away($this->checkoutUrl);
+    }
+
+    protected function createCheckoutLink()
+    {
         $checkoutResponse = $this->createCheckout($this->api, $this->payload);
 
-        $checkoutUrl = (new CreatedCheckoutResponse($checkoutResponse))->checkoutUrl();
-
-        return redirect()->away($checkoutUrl);
+        $this->checkoutUrl = (new CreatedCheckoutResponse($checkoutResponse))->checkoutUrl();
     }
 
     protected function createCheckout(LemonSqueezy $paymentsApi, array $payload)
@@ -61,10 +68,8 @@ class CheckoutController
                     );
             }
 
-            $course = Nereus::course();
-
             $responseString = $responseString
-                ->setStoreId($course->lemon_squeezy_store_id)
+                ->setStoreId($this->variant->course->course->lemon_squeezy_store_id)
                 ->setVariantId($this->variant->lemon_squeezy_variant_id)
                 ->createCheckout();
 
