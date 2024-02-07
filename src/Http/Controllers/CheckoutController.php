@@ -69,7 +69,7 @@ class CheckoutController
             }
 
             $responseString = $responseString
-                ->setStoreId($this->variant->course->course->lemon_squeezy_store_id)
+                ->setStoreId($this->variant->course->lemon_squeezy_store_id)
                 ->setVariantId($this->variant->lemon_squeezy_variant_id)
                 ->createCheckout();
 
