@@ -20,7 +20,6 @@ class WebhookController
          * that will be triggered on the order.created
          * observer.
          */
-
         try {
             // Validates and burns token.
             $this->validateWebhookToken();
@@ -33,6 +32,7 @@ class WebhookController
         } catch (\Exception $e) {
             // Restore token.
             $this->restoreToken();
+
             return response($e->getMessage(), 400);
         }
 
