@@ -21,14 +21,20 @@ class WebhookController
          * observer.
          */
 
-        // Validates and burns token.
-        $this->validateWebhookToken();
+        try {
+            // Validates and burns token.
+            $this->validateWebhookToken();
 
-        // Verify if the variant id is part of our course variants.
-        $this->validateLemonSqueezyVariantId();
+            // Verify if the variant id is part of our course variants.
+            $this->validateLemonSqueezyVariantId();
 
-        // Store the order and start the course assignment process.
-        $this->storeOrder();
+            // Store the order and start the course assignment process.
+            $this->storeOrder();
+        } catch (\Exception $e) {
+            // Restore token.
+            $this->restoreToken();
+            return response($e->getMessage(), 400);
+        }
 
         return response(200);
 
@@ -49,13 +55,22 @@ class WebhookController
         }
     }
 
+    protected function restoreToken()
+    {
+        $payload = request()->all();
+
+        $token = data_get($payload, 'meta.custom_data.token');
+
+        Token::restoreToken($token);
+    }
+
     protected function validateWebhookToken()
     {
         $payload = request()->all();
 
         $token = data_get($payload, 'meta.custom_data.token');
 
-        Token::burn($token);
+        Token::burnToken($token);
     }
 
     protected function storeOrder()
