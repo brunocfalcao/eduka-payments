@@ -20,12 +20,14 @@ class SimulateWebhook extends Command
         DB::table('tokens')
             ->truncate();
 
-        DB::table('orders')
-            ->truncate();
+        /*
+          DB::table('orders')
+              ->truncate();
 
-        DB::table('users')
-            ->where('email', 'bruno.falcao@live.com')
-            ->delete();
+          DB::table('users')
+              ->where('email', 'bruno.falcao@live.com')
+              ->delete();
+          */
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
@@ -33,6 +35,12 @@ class SimulateWebhook extends Command
         Token::createToken('M8DIhc1py9BMYNe29kBarYFozxJ0tR4yYubBYve2');
 
         $url = 'http://brunofalcao.local:8000/lemonsqueezy/webhook';
+
+        /**
+         * Silver surfer: 191933
+         * Orion: 192214
+         */
+        $variantId = 191933;
 
         $webhook = '
 {
@@ -83,7 +91,7 @@ class SimulateWebhook extends Command
         "created_at": "2024-02-02T07:57:04.000000Z",
         "product_id": 154629,
         "updated_at": "2024-02-02T07:57:04.000000Z",
-        "variant_id": 192214,
+        "variant_id": '.$variantId.',
         "product_name": "Mastering Nova - Orion",
         "variant_name": "Default"
       },
