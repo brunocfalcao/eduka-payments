@@ -13,6 +13,8 @@ class LemonSqueezy
 
     private const METHOD_DELETE = 'DELETE';
 
+    private const METHOD_GET = 'GET';
+
     private string $baseUri = 'https://api.lemonsqueezy.com/v1';
 
     private array $data = [];
@@ -25,6 +27,11 @@ class LemonSqueezy
         $this->data['relationships'] = [];
     }
 
+    public function getVariant($variantId)
+    {
+        return $this->get('variants/'.$variantId);
+    }
+
     public function createCheckout()
     {
         $this->data['type'] = 'checkouts';
@@ -32,35 +39,9 @@ class LemonSqueezy
         return $this->post('checkouts');
     }
 
-    public function createDiscount(string $code, float $amount, bool $isFixed)
-    {
-        $this->data['type'] = 'discounts';
-
-        $this->data['attributes'] = [
-            'name' => $code,
-            'code' => $code,
-            'amount' => $isFixed ? $amount * 100 : $amount,
-            'amount_type' => $isFixed ? 'fixed' : 'percent',
-        ];
-
-        return $this->post('discounts');
-    }
-
-    public function deleteDiscount(string $id)
-    {
-        return $this->delete('discounts/'.$id);
-    }
-
     public function setCustomPrice($price)
     {
         $this->data['attributes']['custom_price'] = $price;
-
-        return $this;
-    }
-
-    public function disableProductVariants()
-    {
-        $this->data['attributes']['product_options']['enabled_variants'] = [];
 
         return $this;
     }
@@ -110,23 +91,9 @@ class LemonSqueezy
         return $this;
     }
 
-    public function setCouponId(string $discountCode)
-    {
-        $this->data['checkout_options']['discount_code'] = $discountCode;
-
-        return $this;
-    }
-
     public function setExpiresAt($dateTime)
     {
         $this->data['expires_at'] = $dateTime;
-
-        return $this;
-    }
-
-    public function setPreview($preview)
-    {
-        $this->data['preview'] = $preview;
 
         return $this;
     }
@@ -139,6 +106,11 @@ class LemonSqueezy
     protected function post(string $path)
     {
         return $this->makeRequest($path, self::METHOD_POST);
+    }
+
+    protected function get(string $path)
+    {
+        return $this->makeRequest($path, self::METHOD_GET);
     }
 
     protected function delete(string $path)
