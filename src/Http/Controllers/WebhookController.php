@@ -114,7 +114,9 @@ class WebhookController
 
         $lsVariantId = data_get($payload, 'data.attributes.first_order_item.variant_id');
 
-        $data['variant_id'] = Variant::firstWhere('lemon_squeezy_variant_id', $lsVariantId)->id;
+        $variant = Variant::firstWhere('lemon_squeezy_variant_id', $lsVariantId);
+
+        $data['variant_id'] = $variant->id;
 
         Order::create($data);
     }
