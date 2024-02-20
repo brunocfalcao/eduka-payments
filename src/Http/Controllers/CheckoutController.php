@@ -18,8 +18,6 @@ class CheckoutController
 
     protected $country;
 
-    protected $payload;
-
     protected $checkoutUrl;
 
     public function __invoke()
@@ -30,8 +28,6 @@ class CheckoutController
 
         $this->validateRequiredData();
 
-        $this->obtainCountry();
-
         $this->createPayload();
 
         $this->createCheckoutLink();
@@ -41,12 +37,12 @@ class CheckoutController
 
     protected function createCheckoutLink()
     {
-        $checkoutResponse = $this->createCheckout($this->api, $this->payload);
+        $checkoutResponse = $this->createCheckout($this->api);
 
         $this->checkoutUrl = (new CreatedCheckoutResponse($checkoutResponse))->checkoutUrl();
     }
 
-    protected function createCheckout(LemonSqueezy $paymentsApi, array $payload)
+    protected function createCheckout(LemonSqueezy $paymentsApi)
     {
         try {
             $responseString = $paymentsApi
@@ -58,6 +54,7 @@ class CheckoutController
                 ->setCustomData([
                     // This token will be burnt on the webhook controller.
                     'token' => Token::createToken()->token,
+                    'country' => $this->getCountry(),
                 ]);
 
             // Conditionally applying setCustomPrice.
@@ -110,10 +107,10 @@ class CheckoutController
         );
     }
 
-    protected function obtainCountry()
+    protected function getCountry()
     {
         // https://developers.cloudflare.com/fundamentals/reference/http-request-headers/
-        $this->country ??= request()->header('cf-ipcountry');
+        return request()->header('cf-ipcountry');
     }
 
     protected function validateRequiredData()

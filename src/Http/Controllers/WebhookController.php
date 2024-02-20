@@ -114,9 +114,12 @@ class WebhookController
 
         $lsVariantId = data_get($payload, 'data.attributes.first_order_item.variant_id');
 
+        $country = data_get($payload, 'meta.custom_data.country');
+
         $variant = Variant::firstWhere('lemon_squeezy_variant_id', $lsVariantId);
 
         $data['variant_id'] = $variant->id;
+        $data['country'] = $country;
 
         Order::create($data);
     }
