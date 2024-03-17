@@ -24,7 +24,7 @@ class SimulateWebhook extends Command
           DB::table('orders')
               ->truncate();
 
-          DB::table('users')
+          DB::table('students')
               ->where('email', 'bruno.falcao@live.com')
               ->delete();
           */
