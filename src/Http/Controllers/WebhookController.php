@@ -47,7 +47,10 @@ class WebhookController
         $payload = request()->all();
 
         // This is the LS variant id, not the eduka variants.id value.
-        $variantId = data_get($payload, 'data.attributes.first_order_item.variant_id');
+        $variantId = data_get(
+            $payload,
+            'data.attributes.first_order_item.variant_id'
+        );
 
         // Check if there is an eduka variant with this LS variant id.
         if (! Variant::where('lemon_squeezy_variant_id', $variantId)->exists()) {

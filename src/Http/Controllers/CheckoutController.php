@@ -44,6 +44,14 @@ class CheckoutController
 
     protected function createCheckout(LemonSqueezy $paymentsApi)
     {
+        $customData = [];
+        $customData['token'] = Token::createToken()->token;
+
+        // In local environments, the country will be null.
+        if ($this->getCountry() != null) {
+            $customData['country'] = $this->getCountry();
+        }
+
         try {
             $responseString = $paymentsApi
                 ->setRedirectUrl(URL::temporarySignedRoute(
@@ -51,11 +59,7 @@ class CheckoutController
                     now()->addMinutes(5)
                 ))
                 ->setExpiresAt(now()->addHours(1)->toString())
-                ->setCustomData([
-                    // This token will be burnt on the webhook controller.
-                    'token' => Token::createToken()->token,
-                    'country' => $this->getCountry(),
-                ]);
+                ->setCustomData($customData);
 
             // Conditionally applying setCustomPrice.
             if ($this->variant->lemon_squeezy_price_override) {
