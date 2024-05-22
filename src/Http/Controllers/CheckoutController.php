@@ -62,7 +62,7 @@ class CheckoutController
                 ->setCustomData($customData);
 
             // Conditionally applying setCustomPrice.
-            if ($this->variant->lemon_squeezy_price_override) {
+            if ($this->variant->lemon_squeezy_price_override !== null) {
                 $responseString = $responseString
                     ->setCustomPrice(
                         $this->variant->lemon_squeezy_price_override * 100

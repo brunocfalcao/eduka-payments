@@ -14,11 +14,6 @@ class PaymentsServiceProvider extends EdukaServiceProvider
         parent::boot();
     }
 
-    public function register()
-    {
-        //
-    }
-
     protected function loadCommands()
     {
         $this->commands([

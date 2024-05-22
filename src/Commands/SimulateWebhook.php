@@ -34,13 +34,9 @@ class SimulateWebhook extends Command
         // Create the token that will be called by the json below.
         Token::createToken('s3Exo2NJvjFj1tH1nw4aktPSOIXuR3qjnRdenpnk');
 
-        $url = 'http://brunofalcao.local:8000/lemonsqueezy/webhook';
+        $url = 'http://brunofalcao-dev.local:8000/lemonsqueezy/webhook';
 
-        /**
-         * Silver surfer: 191933
-         * Orion: 192214
-         */
-        $variantId = 191933;
+        $variantId = env('MNOR_VARIANT_ID');
 
         $webhook = '
 {

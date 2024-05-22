@@ -6,6 +6,6 @@ class RedirectController
 {
     public function __invoke()
     {
-        return view('course::thanks-for-buying');
+        return view('course::layouts.thanks-for-buying');
     }
 }
