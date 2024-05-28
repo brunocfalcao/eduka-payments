@@ -20,15 +20,6 @@ class SimulateWebhook extends Command
         DB::table('tokens')
             ->truncate();
 
-        /*
-          DB::table('orders')
-              ->truncate();
-
-          DB::table('students')
-              ->where('email', 'bruno.falcao@live.com')
-              ->delete();
-          */
-
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         // Create the token that will be called by the json below.
@@ -36,7 +27,7 @@ class SimulateWebhook extends Command
 
         $url = 'http://eduka-pro.local:8000/lemonsqueezy/webhook';
 
-        $variantId = env('MNOR_VARIANT_ID');
+        $variantId = env('EDUKA_WEBHOOK_VARIANT_ID');
 
         $webhook = '
 {
@@ -63,11 +54,11 @@ class SimulateWebhook extends Command
       "setup_fee": 0,
       "test_mode": true,
       "total_usd": 100,
-      "user_name": "Bruno Falcao",
+      "user_name": '. env('EDUKA_WEBHOOK_TEST_NAME') . ',
       "created_at": "2024-05-27T19:38:00.000000Z",
       "identifier": "2749f9aa-434a-41f8-ad12-1ee7d2bc449d",
       "updated_at": "2024-05-27T19:38:00.000000Z",
-      "user_email": "bruno.falcao@live.com",
+      "user_email": "'. env('EDUKA_WEBHOOK_TEST_EMAIL') . '",
       "customer_id": 1628498,
       "refunded_at": null,
       "order_number": 2567855,
