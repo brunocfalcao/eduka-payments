@@ -25,7 +25,7 @@ class SimulateWebhook extends Command
         // Create the token that will be called by the json below.
         Token::createToken('s3Exo2NJvjFj1tH1nw4aktPSOIXuR3qjnRdenpnk');
 
-        $url = env('APP_URL') . '/lemonsqueezy/webhook';
+        $url = env('APP_URL').'/lemonsqueezy/webhook';
 
         $variantId = env('EDUKA_WEBHOOK_TEST_VARIANT_ID');
 
