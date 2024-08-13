@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Http;
 
 class SimulateWebhook extends Command
 {
-    protected $signature = 'eduka:webhook';
+    protected $signature = 'eduka-payments:webhook';
 
     protected $description = 'Simulate a Lemon Squeezy webhook call';
 

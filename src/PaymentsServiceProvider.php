@@ -4,6 +4,7 @@ namespace Eduka\Payments;
 
 use Eduka\Abstracts\Classes\EdukaServiceProvider;
 use Eduka\Payments\Commands\SimulateWebhook;
+use Eduka\Payments\Commands\Test;
 
 class PaymentsServiceProvider extends EdukaServiceProvider
 {
@@ -18,6 +19,7 @@ class PaymentsServiceProvider extends EdukaServiceProvider
     {
         $this->commands([
             SimulateWebhook::class,
+            Test::class,
         ]);
     }
 }

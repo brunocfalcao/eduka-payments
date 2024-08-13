@@ -11,7 +11,7 @@ class UserCountryFromIP
     public static function get(Request $request): ?CountryRecord
     {
         try {
-            $geoDetect = new GeoDetect();
+            $geoDetect = new GeoDetect;
 
             return $geoDetect->getCountry($request->ip2());
         } catch (\Exception $_) {

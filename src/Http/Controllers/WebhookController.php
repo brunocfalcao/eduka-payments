@@ -53,7 +53,7 @@ class WebhookController
         );
 
         // Check if there is an eduka variant with this LS variant id.
-        if (! Variant::where('lemon_squeezy_variant_id', $variantId)->exists()) {
+        if (! Variant::where('product_id', $variantId)->exists()) {
             throw new \Exception('No variant matched in eduka');
         }
     }
@@ -100,7 +100,7 @@ class WebhookController
             'refunded_at' => 'data.attributes.refunded_at',
             'order_id' => 'data.attributes.first_order_item.order_id',
             'lemon_squeezy_product_id' => 'data.attributes.first_order_item.product_id',
-            'lemon_squeezy_variant_id' => 'data.attributes.first_order_item.variant_id',
+            'product_id' => 'data.attributes.first_order_item.variant_id',
             'lemon_squeezy_product_name' => 'data.attributes.first_order_item.product_name',
             'lemon_squeezy_variant_name' => 'data.attributes.first_order_item.variant_name',
             'price' => 'data.attributes.first_order_item.price',
@@ -119,7 +119,7 @@ class WebhookController
 
         $country = data_get($payload, 'meta.custom_data.country');
 
-        $variant = Variant::firstWhere('lemon_squeezy_variant_id', $lsVariantId);
+        $variant = Variant::firstWhere('product_id', $lsVariantId);
 
         $data['variant_id'] = $variant->id;
         $data['country'] = $country;

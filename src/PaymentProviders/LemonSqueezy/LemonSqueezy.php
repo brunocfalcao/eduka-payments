@@ -131,7 +131,7 @@ class LemonSqueezy
         $data = $this->build();
 
         $request = new Request($method, $uri, $headers, $data);
-        $client = new Client();
+        $client = new Client;
         $res = $client->sendRequest($request);
 
         try {

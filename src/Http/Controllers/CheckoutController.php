@@ -4,9 +4,8 @@ namespace Eduka\Payments\Http\Controllers;
 
 use Brunocfalcao\Tokenizer\Models\Token;
 use Eduka\Cube\Models\Variant;
+use Eduka\Helpers\Facades\Eduka;
 use Eduka\Nereus\Facades\Nereus;
-use Eduka\Payments\PaymentProviders\LemonSqueezy\LemonSqueezy;
-use Eduka\Payments\PaymentProviders\LemonSqueezy\Responses\CreatedCheckoutResponse;
 use Exception;
 use Illuminate\Support\Facades\URL;
 
@@ -22,6 +21,11 @@ class CheckoutController
 
     public function __invoke()
     {
+        // Obtain the Payment Class that we need to use.
+        $gateway = Nereus::course()->payments_gateway_class;
+
+        dd($gateway);
+
         $this->getLemonSqueezyApi();
 
         $this->getVariant();
@@ -62,16 +66,16 @@ class CheckoutController
                 ->setCustomData($customData);
 
             // Conditionally applying setCustomPrice.
-            if ($this->variant->lemon_squeezy_price_override !== null) {
+            if ($this->variant->price_override !== null) {
                 $responseString = $responseString
                     ->setCustomPrice(
-                        $this->variant->lemon_squeezy_price_override * 100
+                        $this->variant->price_override * 100
                     );
             }
 
             $responseString = $responseString
                 ->setStoreId($this->variant->course->lemon_squeezy_store_id)
-                ->setVariantId($this->variant->lemon_squeezy_variant_id)
+                ->setVariantId($this->variant->product_id)
                 ->createCheckout();
 
             $raw = json_decode($responseString, true);
